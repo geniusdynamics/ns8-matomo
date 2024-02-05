@@ -19,7 +19,6 @@ data = json.load(sys.stdin)
 host = data.get("host", "")
 le = data.get("lets_encrypt", True)
 h2hs = data.get("http2https", True)
-h2hs = data.get("http2https", True)
 # Talk with agent using file descriptor.
 # Setup configuration from user input.
 agent.set_env("TRAEFIK_HOST", host)
