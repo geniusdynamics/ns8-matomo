@@ -1,11 +1,11 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "title": "Configure 2fauth",
+    "title": "Configure matomo",
     "$id": "http://nethserver.org/json-schema/task/input/matomo/configure-module",
     "description": "Configure matomo",
     "examples": [
         {
-            "host": "2fauth.domain.org",
+            "host": "matomo.domain.org",
             "http2https": true,
             "lets_encrypt": true,
             "matomo_database_username": "",
