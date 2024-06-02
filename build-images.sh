@@ -10,7 +10,7 @@ set -e
 # Prepare variables for later use
 images=()
 # The image will be pushed to GitHub container registry
-repobase="${REPOBASE:-ghcr.io/compgeniuses}"
+repobase="${REPOBASE:-ghcr.io/geniusdynamics}"
 # Configure the image name
 reponame="matomo"
 matomo_version="5.0.3"
