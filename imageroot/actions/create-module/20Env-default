@@ -9,7 +9,10 @@ import json
 import sys
 import agent
 import os
+import secrets
 from pathlib import Path
+
+data = json.load(sys.stdin)
 
 # try to find the timezone except to UTC
 symlink_path = "/etc/localtime"
@@ -18,19 +21,54 @@ timezone = str(resolved_path.relative_to(Path("/usr/share/zoneinfo")))
 if not timezone:
     timezone = "UTC"
 
-# Create default vars
-agent.set_env("MATOMO_DATABASE_ADAPTER", "mysql")
-agent.set_env("MATOMO_DATABASE_TABLES_PREFIX", "matomo")
-agent.set_env("MARIADB_DISABLE_UPGRADE_BACKUP", 1)
-agent.set_env("MARIADB_AUTO_UPGRADE", 1)
-agent.set_env("PHP_MEMORY_LIMIT", 2048)
-agent.set_env("MARIADB_INITDB_SKIP_TZINFO", "1")
 
-# agent.set_env("MATOMO_DATABASE_HOST", "localhost")
-# agent.set_env("MATOMO_DATABASE_USERNAME", "matomo")
-# agent.set_env("MATOMO_DATABASE_PASSWORD", "Nethesis,1234")
-# agent.set_env("MATOMO_DATABASE_DBNAME", "matomo")
+def generate_random_password():
+    return secrets.token_urlsafe(16)
+
+
+MARIADB_AUTO_UPGRADE = data.get("MARIADB_AUTO_UPGRADE", "1")
+MARIADB_DISABLE_UPGRADE_BACKUP = data.get("MARIADB_DISABLE_UPGRADE_BACKUP", "1")
+MARIADB_ROOT_PASSWORD = generate_random_password()
+MARIADB_DATABASE = data.get("MARIADB_DATABASE", "matomo")
+MARIADB_USER = data.get("MARIADB_USER", "matomo")
+MARIADB_PASSWORD = generate_random_password()
+MARIADB_INITDB_SKIP_TZINFO = data.get("MARIADB_INITDB_SKIP_TZINFO", "1")
+
+database_config = {
+    "MARIADB_AUTO_UPGRADE": MARIADB_AUTO_UPGRADE,
+    "MARIADB_DISABLE_UPGRADE_BACKUP": MARIADB_DISABLE_UPGRADE_BACKUP,
+    "MARIADB_ROOT_PASSWORD": MARIADB_ROOT_PASSWORD,
+    "MARIADB_DATABASE": MARIADB_DATABASE,
+    "MARIADB_USER": MARIADB_USER,
+    "MARIADB_PASSWORD": MARIADB_PASSWORD,
+    "MARIADB_INITDB_SKIP_TZINFO": MARIADB_INITDB_SKIP_TZINFO,
+}
+agent.write_envfile("database.env", database_config)
+
+MATOMO_DATABASE_HOST = data.get("MATOMO_DATABASE_HOST", "matomo-mariadb")
+MATOMO_DATABASE_USERNAME = MARIADB_USER
+MATOMO_DATABASE_PASSWORD = MARIADB_PASSWORD
+MATOMO_DATABASE_DBNAME = MARIADB_DATABASE
+MATOMO_DATABASE_TABLES_PREFIX = data.get("MATOMO_DATABASE_TABLES_PREFIX", "matomo")
+MATOMO_DATABASE_ADAPTER = data.get("MATOMO_DATABASE_ADAPTER", "mysql")
+PHP_MEMORY_LIMIT = data.get("PHP_MEMORY_LIMIT", "2048M")
+
+matomo_config = {
+    "MATOMO_DATABASE_HOST": MATOMO_DATABASE_HOST,
+    "MATOMO_DATABASE_USERNAME": MATOMO_DATABASE_USERNAME,
+    "MATOMO_DATABASE_PASSWORD": MATOMO_DATABASE_PASSWORD,
+    "MATOMO_DATABASE_DBNAME": MATOMO_DATABASE_DBNAME,
+    "MATOMO_DATABASE_TABLES_PREFIX": MATOMO_DATABASE_TABLES_PREFIX,
+    "MATOMO_DATABASE_ADAPTER": MATOMO_DATABASE_ADAPTER,
+    "PHP_MEMORY_LIMIT": PHP_MEMORY_LIMIT,
+}
+agent.write_envfile("matomo.env", matomo_config)
+
+
+# Create default vars
+
+agent.set_env("PHP_MEMORY_LIMIT", 2048)
 
 # Try to parse the stdin as JSON.
-
+agent.dump_env()
 
