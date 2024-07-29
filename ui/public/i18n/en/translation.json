@@ -11,6 +11,8 @@
     "app_images": "App image | App images",
     "app_volumes": "App volume | App volumes",
     "installation_node": "Installation node",
+    "matomo_url": "Matomo URL",
+    "open_matomo_page": "Go to Matomo",
     "node": "Node",
     "name": "Name",
     "size": "Size",
@@ -24,7 +26,17 @@
     "title": "Settings",
     "configure_instance": "Configure {instance}",
     "save": "Save",
-    "test_field": "Test field"
+    "matomo_fqdn": "matomo hostname (FQDN)",
+    "lets_encrypt": "Request LE Certificate",
+    "http_to_https": "Force HTTPS",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "advanced": "Advanced",
+    "configuring": "Configuring",
+    "instance_configuration": "Configure matomo",
+    "domain_already_used_in_traefik": "Domain already used in traefik",
+    "host_pattern": "Must be a valid fully qualified domain name",
+    "host_format": "Must be a valid fully qualified domain name"
   },
   "about": {
     "title": "About"

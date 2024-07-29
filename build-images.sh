@@ -10,10 +10,10 @@ set -e
 # Prepare variables for later use
 images=()
 # The image will be pushed to GitHub container registry
-repobase="${REPOBASE:-ghcr.io/compgeniuses}"
+repobase="${REPOBASE:-ghcr.io/geniusdynamics}"
 # Configure the image name
 reponame="matomo"
-
+matomo_version="5.0.3"
 # Create a new empty container image
 container=$(buildah from scratch)
 
@@ -38,7 +38,7 @@ buildah config --entrypoint=/ \
     --label="org.nethserver.authorizations=traefik@node:routeadm" \
     --label="org.nethserver.tcp-ports-demand=1" \
     --label="org.nethserver.rootfull=0" \
-    --label="org.nethserver.images=docker.io/matomo:latest docker.io/mariadb:10.11.6" \
+    --label="org.nethserver.images=docker.io/matomo:${matomo_version} docker.io/mariadb:10.11.6" \
     "${container}"
 # Commit the image
 buildah commit "${container}" "${repobase}/${reponame}"

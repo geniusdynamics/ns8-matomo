@@ -31,10 +31,9 @@ ExecStart=/usr/bin/podman run --conmon-pidfile %t/matomo-app.pid \
     --env MATOMO_DATABASE_DBNAME=matomo \
     --volume matomo-app:/var/www/html/:Z \
     --volume ./config:/tmp:Z \
-    --volume ./matomo/config:/var/www/html/config \
-    --volume ./matomo/logs:/var/www/html/logs \
-    --volume plugins:/varwww/html/plugins \
-    --volume ./matomo/plugins:/var/www/html/plugins \
+    --volume configs:/var/www/html/config \
+    --volume matomo_logs:/var/www/html/logs \
+    --volume matomo_plugins:/var/www/html/plugins \
     ${MATOMO_IMAGE}
 ExecStop=/usr/bin/podman stop --ignore --cidfile %t/matomo-app.ctr-id -t 10
 ExecReload=/usr/bin/podman kill -s HUP matomo-app
