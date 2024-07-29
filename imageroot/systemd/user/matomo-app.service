@@ -22,13 +22,7 @@ ExecStartPost=/usr/bin/bash -c "while ! /usr/bin/podman exec matomo-app /usr/bin
 ExecStart=/usr/bin/podman run --conmon-pidfile %t/matomo-app.pid \
     --cidfile %t/matomo-app.ctr-id --cgroups=no-conmon \
     --pod-id-file %t/matomo.pod-id --replace -d --name  matomo-app \
-    --env=MATOMO_* \
-    --env MATOMO_DATABASE_ADAPTER=mysql \
-    --env MATOMO_DATABASE_HOST=127.0.0.1 \
-    --env MATOMO_DATABASE_TABLES_PREFIX=matomo \
-    --env MATOMO_DATABASE_USERNAME=matomo \
-    --env MATOMO_DATABASE_PASSWORD=Matomo,1234 \
-    --env MATOMO_DATABASE_DBNAME=matomo \
+    --env-file=%S/state/matomo.env \
     --volume matomo-app:/var/www/html/:Z \
     --volume ./config:/tmp:Z \
     --volume configs:/var/www/html/config \
