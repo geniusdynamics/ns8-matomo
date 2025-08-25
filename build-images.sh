@@ -13,33 +13,33 @@ images=()
 repobase="${REPOBASE:-ghcr.io/geniusdynamics}"
 # Configure the image name
 reponame="matomo"
-matomo_version="5.0.3"
+matomo_version="5.3.2"
 # Create a new empty container image
 container=$(buildah from scratch)
 
 # Reuse existing nodebuilder-matomo container, to speed up builds
 if ! buildah containers --format "{{.ContainerName}}" | grep -q nodebuilder-matomo; then
-    echo "Pulling NodeJS runtime..."
-    buildah from --name nodebuilder-matomo -v "${PWD}:/usr/src:Z" docker.io/library/node:lts
+	echo "Pulling NodeJS runtime..."
+	buildah from --name nodebuilder-matomo -v "${PWD}:/usr/src:Z" docker.io/library/node:lts
 fi
 
 echo "Build static UI files with node..."
 buildah run \
-    --workingdir=/usr/src/ui \
-    --env="NODE_OPTIONS=--openssl-legacy-provider" \
-    nodebuilder-matomo \
-    sh -c "yarn install && yarn build"
+	--workingdir=/usr/src/ui \
+	--env="NODE_OPTIONS=--openssl-legacy-provider" \
+	nodebuilder-matomo \
+	sh -c "yarn install && yarn build"
 
 # Add imageroot directory to the container image
 buildah add "${container}" imageroot /imageroot
 buildah add "${container}" ui/dist /ui
 # Setup the entrypoint, ask to reserve one TCP port with the label and set a rootless container
 buildah config --entrypoint=/ \
-    --label="org.nethserver.authorizations=traefik@node:routeadm" \
-    --label="org.nethserver.tcp-ports-demand=1" \
-    --label="org.nethserver.rootfull=0" \
-    --label="org.nethserver.images=docker.io/matomo:${matomo_version} docker.io/mariadb:10.11.6" \
-    "${container}"
+	--label="org.nethserver.authorizations=traefik@node:routeadm" \
+	--label="org.nethserver.tcp-ports-demand=1" \
+	--label="org.nethserver.rootfull=0" \
+	--label="org.nethserver.images=docker.io/matomo:${matomo_version} docker.io/mariadb:10.11.6" \
+	"${container}"
 # Commit the image
 buildah commit "${container}" "${repobase}/${reponame}"
 
@@ -57,14 +57,14 @@ images+=("${repobase}/${reponame}")
 #
 
 #
-# Setup CI when pushing to Github. 
+# Setup CI when pushing to Github.
 # Warning! docker::// protocol expects lowercase letters (,,)
 if [[ -n "${CI}" ]]; then
-    # Set output value for Github Actions
-    printf "images=%s\n" "${images[*],,}" >> "${GITHUB_OUTPUT}"
+	# Set output value for Github Actions
+	printf "images=%s\n" "${images[*],,}" >>"${GITHUB_OUTPUT}"
 else
-    # Just print info for manual push
-    printf "Publish the images with:\n\n"
-    for image in "${images[@],,}"; do printf "  buildah push %s docker://%s:%s\n" "${image}" "${image}" "${IMAGETAG:-latest}" ; done
-    printf "\n"
+	# Just print info for manual push
+	printf "Publish the images with:\n\n"
+	for image in "${images[@],,}"; do printf "  buildah push %s docker://%s:%s\n" "${image}" "${image}" "${IMAGETAG:-latest}"; done
+	printf "\n"
 fi

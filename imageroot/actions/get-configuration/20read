@@ -12,7 +12,6 @@ config = {}
 # Read current configuration from the environment file
 config["host"] = os.getenv("TRAEFIK_HOST","")
 config["lets_encrypt"] = os.getenv("TRAEFIK_LETS_ENCRYPT") == "True"
-config["http2https"] = os.getenv("TRAEFIK_HTTP2HTTPS") == "True"
 config["matomo_database_username"] = os.getenv("MATOMO_DATABASE_USERNAME","matomo")
 config["matomo_database_password"] = os.getenv("MATOMO_DATABASE_PASSWORD","Matomo,1234")
 config["matomo_database_dbname"] = os.getenv("MATOMO_DATABASE_DBNAME","matomo")
