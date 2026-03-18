@@ -23,7 +23,11 @@ The output of the command will return the instance name.
 Example output:
 
 ```json
-{"module_id": "matomo1", "image_name": "matomo", "image_url": "ghcr.io/geniusdynamics/matomo:latest"}
+{
+  "module_id": "matomo1",
+  "image_name": "matomo",
+  "image_url": "ghcr.io/geniusdynamics/matomo:latest"
+}
 ```
 
 ## Configure
@@ -32,35 +36,35 @@ Assuming the Matomo instance is named `matomo1`, launch `configure-module` with 
 
 ### MariaDB Service Configuration
 
-| Parameter | Value |
-|-----------|-------|
-| `MYSQL_ROOT_PASSWORD` | Set a strong password for root user |
-| `MARIADB_AUTO_UPGRADE` | 1 |
-| `MARIADB_DISABLE_UPGRADE_BACKUP` | 1 |
+| Parameter                        | Value                               |
+| -------------------------------- | ----------------------------------- |
+| `MYSQL_ROOT_PASSWORD`            | Set a strong password for root user |
+| `MARIADB_AUTO_UPGRADE`           | 1                                   |
+| `MARIADB_DISABLE_UPGRADE_BACKUP` | 1                                   |
 
 ### Database Configuration
 
-| Parameter | Description |
-|-----------|-------------|
-| `MYSQL_PASSWORD` | Password for the Matomo database user |
-| `MYSQL_DATABASE` | Name of the Matomo database |
-| `MYSQL_USER` | Username for the Matomo database |
-| `MATOMO_DATABASE_ADAPTER` | mysql |
-| `MATOMO_DATABASE_TABLES_PREFIX` | Table prefix (optional) |
-| `MATOMO_DATABASE_USERNAME` | Database username |
-| `MATOMO_DATABASE_PASSWORD` | Database password |
-| `MATOMO_DATABASE_DBNAME` | Database name |
-| `MARIADB_INITDB_SKIP_TZINFO` | 1 |
+| Parameter                       | Description                           |
+| ------------------------------- | ------------------------------------- |
+| `MYSQL_PASSWORD`                | Password for the Matomo database user |
+| `MYSQL_DATABASE`                | Name of the Matomo database           |
+| `MYSQL_USER`                    | Username for the Matomo database      |
+| `MATOMO_DATABASE_ADAPTER`       | mysql                                 |
+| `MATOMO_DATABASE_TABLES_PREFIX` | Table prefix (optional)               |
+| `MATOMO_DATABASE_USERNAME`      | Database username                     |
+| `MATOMO_DATABASE_PASSWORD`      | Database password                     |
+| `MATOMO_DATABASE_DBNAME`        | Database name                         |
+| `MARIADB_INITDB_SKIP_TZINFO`    | 1                                     |
 
 ### Matomo Environment Configuration
 
-| Parameter | Description |
-|-----------|-------------|
-| `MATOMO_DATABASE_HOST` | Database host (e.g., MariaDB module) |
-| `PHP_MEMORY_LIMIT` | PHP memory limit (e.g., 2048M) |
-| `host` | Fully qualified domain name for Matomo |
-| `http2https` | Enable or disable HTTP to HTTPS redirection |
-| `lets_encrypt` | Enable or disable Let's Encrypt certificate |
+| Parameter              | Description                                 |
+| ---------------------- | ------------------------------------------- |
+| `MATOMO_DATABASE_HOST` | Database host (e.g., MariaDB module)        |
+| `PHP_MEMORY_LIMIT`     | PHP memory limit (e.g., 2048M)              |
+| `host`                 | Fully qualified domain name for Matomo      |
+| `http2https`           | Enable or disable HTTP to HTTPS redirection |
+| `lets_encrypt`         | Enable or disable Let's Encrypt certificate |
 
 Example:
 
@@ -85,6 +89,14 @@ Furthermore if smarthost setup is changed when Matomo is already running, the ev
 See also the `systemd/user/matomo.service` file.
 
 This setting discovery is just an example to understand how the module is expected to work: it can be rewritten or discarded completely.
+
+## Update
+
+You can forcefully update the module
+
+```bash
+api-cli run update-module --data '{"module_url":"ghcr.io/geniusdynamics/matomo:latest","instances":["matomo1"],"force":true}'
+```
 
 ## Uninstall
 
@@ -112,3 +124,4 @@ To setup the translation process:
 
 1. Add [GitHub Weblate app](https://docs.weblate.org/en/latest/admin/continuous.html#github-setup) to your repository
 2. Add your repository to [hosted.weblate.org](https://hosted.weblate.org) or ask a NethServer developer to add it to the NS8 Weblate project
+
