@@ -12,24 +12,18 @@ After=matomo.service
 [Service]
 Environment=PODMAN_SYSTEMD_UNIT=%n
 EnvironmentFile=%S/state/environment
+EnvironmentFile=%S/state/database.env
 Restart=always
 TimeoutStopSec=70
 ExecStartPre=/bin/rm -f %t/matomo-mariadb.pid %t/matomo-mariadb.ctr-id
 ExecStart=/usr/bin/podman run --conmon-pidfile %t/matomo-mariadb.pid \
     --cidfile %t/matomo-mariadb.ctr-id --cgroups=no-conmon \
     --pod-id-file %t/matomo.pod-id --replace -d --name matomo-mariadb \
-    --env-file=%S/state/environment \
+    --env-file=%S/state/database.env \
     --volume mysql-data:/var/lib/mysql/:Z \
-    --env MARIADB_AUTO_UPGRADE=1 \
-    --env MARIADB_DISABLE_UPGRADE_BACKUP=1 \
-    --env MARIADB_ROOT_PASSWORD=Nethesis,1234 \
-    --env MARIADB_DATABASE=matomo \
-    --env MARIADB_USER=matomo \
-    --env MARIADB_PASSWORD=Matomo,1234 \
-    --env MARIADB_AUTO_UPGRADE=1 \
     ${MARIADB_IMAGE} \
     --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
-ExecStartPost=/usr/bin/podman exec  matomo-mariadb /bin/bash -c 'printf "[client] \npassword=Nethesis,1234" > /root/.my.cnf'
+ExecStartPost=/usr/bin/podman exec  matomo-mariadb /bin/bash -c 'printf "[client] \npassword=${MARIADB_ROOT_PASSWORD}" > /root/.my.cnf'
 ExecStartPost=/usr/bin/podman exec matomo-mariadb /bin/bash -c "while ! mysqladmin ping -h localhost -P 3306 -u root; do sleep 1; done"
 ExecStop=/usr/bin/podman stop --ignore --cidfile %t/matomo-mariadb.ctr-id -t 10
 ExecStopPost=/usr/bin/podman rm --ignore -f --cidfile %t/matomo-mariadb.ctr-id

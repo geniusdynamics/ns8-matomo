@@ -15,11 +15,3 @@ data = json.load(sys.stdin)
 
 # Setup configuration from user input.
 
-agent.set_env("MATOMO_DATABASE_HOST", data.get("matomo_database_host",""))
-agent.set_env("MATOMO_DATABASE_USERNAME",data.get("matomo_database_username"))
-agent.set_env("MATOMO_DATABASE_PASSWORD", data.get("matomo_database_password"))
-agent.set_env("MATOMO_DATABASE_DBNAME", data.get("matomo_database_dbname"))
-agent.set_env("MARIADB_AUTO_UPGRADE",data.get("mariadb_auto_upgrade","1"))
-agent.set_env("MARIADB_DISABLE_UPGRADE_BACKUP",data.get("mariadb_disable_upgrade_backup","1"))
-agent.set_env("MATOMO_DATABASE_TABLES_PREFIX",data.get("matomo_database_tables_prefix","matomo"))
-agent.set_env("MATOMO_DATABASE_ADAPTER",data.get("matomo_database_adapter","mysql"))
