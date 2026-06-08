@@ -13,7 +13,7 @@ images=()
 repobase="${REPOBASE:-ghcr.io/geniusdynamics}"
 # Configure the image name
 reponame="matomo"
-matomo_version="5.8.0"
+matomo_version="5.10.1"
 # Create a new empty container image
 container=$(buildah from scratch)
 
