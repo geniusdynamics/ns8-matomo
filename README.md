@@ -1,6 +1,6 @@
 # ns8-matomo
 
-This is a module for [NS8](https://github.com/NethServer/ns8-matomo) for the [Matomo](https://github.com/matomo-org/matomo) project.
+This is a module for [NS8](https://github.com/NethServer/ns8-core) for the [Matomo](https://github.com/matomo-org/matomo) project.
 
 The module is based on the official [Matomo Docker image](https://github.com/matomo-org/docker).
 
@@ -34,51 +34,52 @@ Example output:
 
 Assuming the Matomo instance is named `matomo1`, launch `configure-module` with the following parameters:
 
-### MariaDB Service Configuration
-
-| Parameter                        | Value                               |
-| -------------------------------- | ----------------------------------- |
-| `MYSQL_ROOT_PASSWORD`            | Set a strong password for root user |
-| `MARIADB_AUTO_UPGRADE`           | 1                                   |
-| `MARIADB_DISABLE_UPGRADE_BACKUP` | 1                                   |
-
-### Database Configuration
-
-| Parameter                       | Description                           |
-| ------------------------------- | ------------------------------------- |
-| `MYSQL_PASSWORD`                | Password for the Matomo database user |
-| `MYSQL_DATABASE`                | Name of the Matomo database           |
-| `MYSQL_USER`                    | Username for the Matomo database      |
-| `MATOMO_DATABASE_ADAPTER`       | mysql                                 |
-| `MATOMO_DATABASE_TABLES_PREFIX` | Table prefix (optional)               |
-| `MATOMO_DATABASE_USERNAME`      | Database username                     |
-| `MATOMO_DATABASE_PASSWORD`      | Database password                     |
-| `MATOMO_DATABASE_DBNAME`        | Database name                         |
-| `MARIADB_INITDB_SKIP_TZINFO`    | 1                                     |
-
-### Matomo Environment Configuration
-
-| Parameter              | Description                                 |
-| ---------------------- | ------------------------------------------- |
-| `MATOMO_DATABASE_HOST` | Database host (e.g., MariaDB module)        |
-| `PHP_MEMORY_LIMIT`     | PHP memory limit (e.g., 2048M)              |
-| `host`                 | Fully qualified domain name for Matomo      |
-| `http2https`           | Enable or disable HTTP to HTTPS redirection |
-| `lets_encrypt`         | Enable or disable Let's Encrypt certificate |
+| Parameter      | Description                                 |
+| -------------- | ------------------------------------------- |
+| `host`         | Fully qualified domain name for Matomo      |
+| `lets_encrypt` | Enable or disable Let's Encrypt certificate |
+| `http2https`   | Enable or disable HTTP to HTTPS redirection |
 
 Example:
 
 ```bash
-api-cli run module/matomo1/configure-module --data '{}'
+api-cli run module/matomo1/configure-module --data '{"host": "matomo.example.org", "lets_encrypt": true, "http2https": true}'
 ```
 
-The above command will start and configure the Matomo instance.
+The above command will start and configure the Matomo instance. The database
+(MariaDB, database and user `matomo`) and its random passwords are created by
+`create-module` and stored in `state/database.env` and `state/matomo.env`.
 
-Test the Matomo backend service:
+Open `https://matomo.example.org/` and finish the Matomo installation wizard
+right away: until the first super user is created, anyone who can reach the
+host name can complete the wizard.
+
+Test the Matomo backend service from the node:
 
 ```bash
-curl http://127.0.0.1/matomo/
+curl -H 'Host: matomo.example.org' http://127.0.0.1/
 ```
+
+## Images
+
+- `matomo-app`: built by `build-images.sh` from the official
+  [matomo-org/docker](https://github.com/matomo-org/docker) build files,
+  vendored in `matomo/`. The PHP base image is pinned to a release with the
+  fix for CVE-2026-109618/109619 ("PHP2Shell"), because the official Matomo
+  images on Docker Hub do not ship a fixed PHP yet. Once
+  `docker.io/library/matomo` is rebuilt on PHP >= 8.4.27, the module can use
+  it again.
+- `docker.io/library/mariadb`, pinned by version and digest.
+
+The Matomo code is kept in persistent volumes and is copied there from the
+image only on the first start: a new image updates PHP and the system
+libraries, while Matomo itself is updated with its built-in updater.
+
+## Backup and restore
+
+The database is saved as an SQL dump (`state/matomo.sql`), together with the
+Matomo volumes and the environment files. Restore loads the dump into a new,
+empty database volume.
 
 ## Smarthost Setting Discovery
 
