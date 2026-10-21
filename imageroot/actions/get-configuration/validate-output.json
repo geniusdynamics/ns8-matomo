@@ -7,14 +7,7 @@
         {
             "host": "matomo.domain.org",
             "http2https": true,
-            "lets_encrypt": true,
-            "matomo_database_username": "",
-            "matomo_database_password": "",
-            "matomo_database_dbname": "matomo",
-            "mariadb_auto_upgrade": "1",
-            "mariadb_disable_upgrade_backup": "0",
-            "matomo_database_tables_prefix": "matomo",
-            "matomo_database_adapter": "mysql"
+            "lets_encrypt": true
         }
     ],
     "type": "object",
@@ -38,26 +31,6 @@
             "type": "boolean",
             "title": "HTTP to HTTPS redirection",
             "description": "Redirect all the HTTP requests to HTTPS"
-        },
-        "mariadb_auto_upgrade": {
-            "type": "boolean",
-            "title": "Mariadb auto upgrade",
-            "description": "mariadb aut upgrade"
-        },
-        "mariadb_disable_upgrade_backup": {
-            "type": "boolean",
-            "title": "Mariadb disable upgrade backup",
-            "description": "Mariadb disable upgrade backup"
-        },
-        "matomo_database_tables_prefix": {
-            "type": "string",
-            "title": "matomo database prefix",
-            "description": "matomo database prefix"
-        },
-        "matomo_database_adapter": {
-            "type": "string",
-            "title": "matomo database adaptor",
-            "description": "matomo database adaptor"
         }
     }
 }
