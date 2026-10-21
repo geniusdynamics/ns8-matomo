@@ -28,7 +28,7 @@ ExecStart=/usr/bin/podman run --conmon-pidfile %t/matomo-app.pid \
     --volume configs:/var/www/html/config \
     --volume matomo_logs:/var/www/html/logs \
     --volume matomo_plugins:/var/www/html/plugins \
-    ${MATOMO_IMAGE}
+    ${MATOMO_APP_IMAGE}
 ExecStop=/usr/bin/podman stop --ignore --cidfile %t/matomo-app.ctr-id -t 10
 ExecReload=/usr/bin/podman kill -s HUP matomo-app
 SyslogIdentifier=%u
