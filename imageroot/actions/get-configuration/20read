@@ -9,11 +9,18 @@ import os
 import sys
 import json
 
+import ldapsettings
+
 # Return only the settings configure-module accepts. Database credentials are
-# kept in state/database.env and state/matomo.env and are never returned.
+# kept in state/database.env and state/matomo.env, the LDAP bind password in
+# state/passwords.env: they are never returned.
 config = {}
 config["host"] = os.getenv("TRAEFIK_HOST", "")
 config["lets_encrypt"] = os.getenv("TRAEFIK_LETS_ENCRYPT") == "True"
 config["http2https"] = os.getenv("TRAEFIK_HTTP2HTTPS", "True") == "True"
+config["installed"] = os.getenv("MATOMO_INSTALLED") == "1"
+config["ldap_enabled"] = os.getenv("LDAP_ENABLED") == "true"
+config["ldap_view_access"] = os.getenv("LDAP_VIEW_ACCESS", "none")
+config.update(ldapsettings.configuration())
 
 json.dump(config, fp=sys.stdout)

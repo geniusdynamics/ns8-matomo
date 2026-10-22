@@ -31,6 +31,76 @@
             "type": "boolean",
             "title": "HTTP to HTTPS redirection",
             "description": "Redirect all the HTTP requests to HTTPS"
+        },
+        "ldap_enabled": {
+            "type": "boolean",
+            "title": "Login with a user domain or LDAP server"
+        },
+        "ldap_view_access": {
+            "type": "string",
+            "enum": [
+                "none",
+                "all"
+            ],
+            "description": "View access of a new LDAP user: none, or all websites"
+        },
+        "ldap_source": {
+            "type": "string",
+            "enum": [
+                "domain",
+                "custom"
+            ]
+        },
+        "ldap_domain": {
+            "type": "string",
+            "maxLength": 253
+        },
+        "ldap_group": {
+            "type": "string",
+            "description": "Only members of this group may log in (Active Directory)"
+        },
+        "ldap_url": {
+            "type": "string",
+            "maxLength": 512
+        },
+        "ldap_start_tls": {
+            "type": "boolean"
+        },
+        "ldap_tls_verify": {
+            "type": "boolean"
+        },
+        "ldap_schema": {
+            "type": "string",
+            "enum": [
+                "ad",
+                "rfc2307"
+            ]
+        },
+        "ldap_base_dn": {
+            "type": "string",
+            "maxLength": 512
+        },
+        "ldap_bind_dn": {
+            "type": "string",
+            "maxLength": 512
+        },
+        "ldap_user_attribute": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[A-Za-z0-9-]*$"
+        },
+        "installed": {
+            "type": "boolean",
+            "description": "Matomo is installed (the administrator account exists)"
+        },
+        "ldap_bind_password_set": {
+            "type": "boolean"
+        },
+        "user_domains": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
         }
     }
 }

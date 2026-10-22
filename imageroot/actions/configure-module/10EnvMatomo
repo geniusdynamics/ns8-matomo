@@ -5,13 +5,24 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 
-import json
-import sys
-import agent
+# Store the directory login settings (the bind password of an LDAP server of
+# its own goes to state/passwords.env, see pypkg/ldapsettings.py).
 
-# Try to parse the stdin as JSON.
-# If parsing fails, output everything to stderr
+import json
+import os
+import sys
+
+import agent
+import ldapsettings
+
 data = json.load(sys.stdin)
 
-# Setup configuration from user input.
-
+ldap_enabled = data.get("ldap_enabled", os.environ.get("LDAP_ENABLED") == "true")
+agent.set_env("LDAP_ENABLED", "true" if ldap_enabled else "false")
+if "ldap_view_access" in data:
+    agent.set_env("LDAP_VIEW_ACCESS", "all" if data["ldap_view_access"] == "all" else "none")
+if any(key.startswith("ldap_") and key not in ("ldap_enabled", "ldap_view_access") for key in data):
+    ldapsettings.apply(data, active=ldap_enabled)
+else:
+    # a request without directory fields (e.g. only the host) keeps them
+    ldapsettings.bind_domain(ldap_enabled)

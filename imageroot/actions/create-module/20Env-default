@@ -14,11 +14,10 @@ from pathlib import Path
 
 data = json.load(sys.stdin)
 
-# try to find the timezone except to UTC
-symlink_path = "/etc/localtime"
-resolved_path = Path(symlink_path).resolve()
-timezone = str(resolved_path.relative_to(Path("/usr/share/zoneinfo")))
-if not timezone:
+# The node time zone becomes the time zone of the first website
+try:
+    timezone = str(Path("/etc/localtime").resolve().relative_to(Path("/usr/share/zoneinfo")))
+except ValueError:
     timezone = "UTC"
 
 
@@ -68,6 +67,9 @@ agent.write_envfile("matomo.env", matomo_config)
 # Create default vars
 
 agent.set_env("PHP_MEMORY_LIMIT", 2048)
+agent.set_env("MATOMO_TIMEZONE", timezone or "UTC")
+agent.set_env("LDAP_ENABLED", "false")
+agent.set_env("LDAP_VIEW_ACCESS", "none")
 
 # Try to parse the stdin as JSON.
 agent.dump_env()
