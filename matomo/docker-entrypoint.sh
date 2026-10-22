@@ -53,7 +53,8 @@ if [ ! -e matomo.php ]; then
 		group="$gid"
 	fi
 	tar cf - --one-file-system -C /usr/src/matomo . | tar xf -
-	chown -R "$user":"$group" .
+	# NS8: config/common.config.ini.php is a read-only mount of the module
+	find . -path ./config/common.config.ini.php -prune -o -exec chown "$user":"$group" {} +
 else
 	# NS8: bring a newer Matomo release or bundled plugin of the image into
 	# the volumes; the database upgrade runs afterwards (core:update)

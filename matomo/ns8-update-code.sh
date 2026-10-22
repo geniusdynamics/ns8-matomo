@@ -34,7 +34,8 @@ if [ -n "$image" ] && { [ -z "$current" ] || newer "$image" "$current"; }; then
 		--exclude=./tmp \
 		--exclude=./misc/user \
 		. | tar xf - --no-overwrite-dir
-	chown -R www-data:www-data .
+	# config/common.config.ini.php is a read-only mount of the module
+	find . -path ./config/common.config.ini.php -prune -o -exec chown www-data:www-data {} +
 fi
 
 for dir in /usr/src/matomo/plugins/LoginLdap; do
