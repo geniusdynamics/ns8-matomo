@@ -88,6 +88,9 @@ def ldap_sections(conn):
         # LDAP_MATCHING_RULE_IN_CHAIN: members of nested groups count too
         user_filter = "(&%s(memberOf:1.2.840.113556.1.4.1941:=%s))" % (user_filter, ldap_filter_escape(group_dn(conn)))
     view_access = "all" if os.environ.get("LDAP_VIEW_ACCESS", "none") == "all" else ""
+    # address of a user without a mail attribute (LoginLdap would use
+    # @mydomain.com): the name of the user domain, if there is one
+    email_suffix = "@" + os.environ["LDAP_DOMAIN"] if conn["source"] == "domain" and os.environ.get("LDAP_DOMAIN") else ""
     return [
         "[LoginLdap]",
         "use_ldap_for_authentication = 1",
@@ -97,6 +100,7 @@ def ldap_sections(conn):
         f"new_user_default_sites_view_access = {ini_value(view_access)}",
         f"ldap_user_id_field = {ini_value(user_attribute)}",
         f"ldap_mail_field = {ini_value('mail')}",
+        f"user_email_suffix = {ini_value(email_suffix)}",
         f"ldap_user_filter = {ini_value(user_filter)}",
         'required_member_of = ""',
         "append_user_email_suffix_to_username = 0",
