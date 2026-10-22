@@ -1,5 +1,6 @@
 # Vendored from https://github.com/matomo-org/docker (commit d27aefa, apache/Dockerfile,
-# Matomo 5.14.2). Changes: pecl downloads are retried (pecl.php.net is flaky), and
+# Matomo 5.14.2). Changes: the LoginLdap plugin and ns8-update-code are added (see
+# below), pecl downloads are retried (pecl.php.net is flaky), and
 # the PHP base image is pinned to 8.4.27, the release with the
 # PHP2Shell fix (CVE-2026-109618/109619). The official matomo 5.14.2 images are not
 # on Docker Hub yet; switch back to docker.io/library/matomo once they are.
@@ -94,9 +95,21 @@ RUN set -ex; \
 	apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false $fetchDeps; \
 	apt-get dist-clean
 
+# NS8: the LoginLdap plugin, for the login with a user domain or LDAP server
+ENV LOGINLDAP_VERSION 5.2.8
+ENV LOGINLDAP_SHA256 db56b0273130adaafeaf3530f0ea5df3748079fb715a4afaaff164f0d561d1c7
+RUN set -ex; \
+	curl -fsSL -o loginldap.tar.gz \
+		"https://github.com/matomo-org/plugin-LoginLdap/archive/refs/tags/${LOGINLDAP_VERSION}.tar.gz"; \
+	echo "${LOGINLDAP_SHA256}  loginldap.tar.gz" | sha256sum -c -; \
+	mkdir /usr/src/matomo/plugins/LoginLdap; \
+	tar -xzf loginldap.tar.gz -C /usr/src/matomo/plugins/LoginLdap --strip-components=1; \
+	rm -rf loginldap.tar.gz /usr/src/matomo/plugins/LoginLdap/tests /usr/src/matomo/plugins/LoginLdap/screenshots
+
 COPY php.ini /usr/local/etc/php/conf.d/php-matomo.ini
 
 COPY docker-entrypoint.sh /entrypoint.sh
+COPY ns8-update-code.sh /usr/local/bin/ns8-update-code
 
 # WORKDIR is /var/www/html (inherited via "FROM php")
 # "/entrypoint.sh" will populate it at container startup from /usr/src/matomo

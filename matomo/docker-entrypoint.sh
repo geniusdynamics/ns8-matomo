@@ -54,6 +54,10 @@ if [ ! -e matomo.php ]; then
 	fi
 	tar cf - --one-file-system -C /usr/src/matomo . | tar xf -
 	chown -R "$user":"$group" .
+else
+	# NS8: bring a newer Matomo release or bundled plugin of the image into
+	# the volumes; the database upgrade runs afterwards (core:update)
+	/usr/local/bin/ns8-update-code
 fi
 
 exec "$@"
