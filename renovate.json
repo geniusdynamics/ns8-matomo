@@ -1,0 +1,23 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Matomo release vendored in matomo/Containerfile",
+      "fileMatch": ["^matomo/Containerfile$"],
+      "matchStrings": ["ENV MATOMO_VERSION (?<currentValue>\\d+\\.\\d+\\.\\d+)"],
+      "depNameTemplate": "matomo-org/matomo",
+      "datasourceTemplate": "github-releases"
+    },
+    {
+      "customType": "regex",
+      "description": "LoginLdap plugin bundled in matomo/Containerfile (its checksum must be updated too)",
+      "fileMatch": ["^matomo/Containerfile$"],
+      "matchStrings": ["ENV LOGINLDAP_VERSION (?<currentValue>\\d+\\.\\d+\\.\\d+)"],
+      "depNameTemplate": "matomo-org/plugin-LoginLdap",
+      "datasourceTemplate": "github-tags",
+      "allowedVersions": "<6"
+    }
+  ]
+}
