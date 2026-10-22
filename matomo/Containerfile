@@ -1,10 +1,9 @@
-# Vendored from https://github.com/matomo-org/docker (commit 509d6ae, apache/Dockerfile,
-# Matomo 5.14.1). Changes: pecl downloads are retried (pecl.php.net is flaky), and
-# the PHP base image is pinned to a release with the
-# PHP2Shell fix (CVE-2026-109618/109619), because the official matomo images on
-# Docker Hub still ship PHP 8.4.26 and the php:8.4.27 tags have no images yet.
-# Switch back to docker.io/library/matomo once it is rebuilt on PHP >= 8.4.27.
-FROM docker.io/library/php:8.3.36-apache@sha256:4aed5d62fe32801afa58b3d18c26b12aa86f25da27526c128cce99e63a38a4b0
+# Vendored from https://github.com/matomo-org/docker (commit d27aefa, apache/Dockerfile,
+# Matomo 5.14.2). Changes: pecl downloads are retried (pecl.php.net is flaky), and
+# the PHP base image is pinned to 8.4.27, the release with the
+# PHP2Shell fix (CVE-2026-109618/109619). The official matomo 5.14.2 images are not
+# on Docker Hub yet; switch back to docker.io/library/matomo once they are.
+FROM docker.io/library/php:8.4.27-apache@sha256:a0b75cee7023ba2c127138dcad2ecc6ec7e09435534645e70450f29f24ea2a5a
 
 ENV PHP_MEMORY_LIMIT=256M
 
@@ -69,7 +68,7 @@ RUN { \
 		echo 'opcache.fast_shutdown=1'; \
 	} > /usr/local/etc/php/conf.d/opcache-recommended.ini
 
-ENV MATOMO_VERSION 5.14.1
+ENV MATOMO_VERSION 5.14.2
 
 RUN set -ex; \
 	fetchDeps=" \

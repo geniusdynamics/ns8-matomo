@@ -65,10 +65,9 @@ curl -H 'Host: matomo.example.org' http://127.0.0.1/
 - `matomo-app`: built by `build-images.sh` from the official
   [matomo-org/docker](https://github.com/matomo-org/docker) build files,
   vendored in `matomo/`. The PHP base image is pinned to a release with the
-  fix for CVE-2026-109618/109619 ("PHP2Shell"), because the official Matomo
-  images on Docker Hub do not ship a fixed PHP yet. Once
-  `docker.io/library/matomo` is rebuilt on PHP >= 8.4.27, the module can use
-  it again.
+  fix for CVE-2026-109618/109619 ("PHP2Shell"), PHP 8.4.27. Once the official
+  `docker.io/library/matomo` image of the vendored Matomo release is on
+  Docker Hub, the module can use it again.
 - `docker.io/library/mariadb`, pinned by version and digest.
 
 The Matomo code is kept in persistent volumes and is copied there from the
