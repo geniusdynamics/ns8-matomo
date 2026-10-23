@@ -143,13 +143,24 @@ def cluster_network():
         return ""
 
 
+# Second-level labels of country suffixes (co.uk, com.au, ...). The module
+# runs in the agent environment, which has no public suffix list: a domain
+# of only one of these plus a country code is treated as a public suffix.
+COUNTRY_SECOND_LEVEL = {"ac", "co", "com", "edu", "gob", "gov", "go", "ltd", "mil",
+                        "ne", "net", "nom", "or", "org", "plc", "sch"}
+
+
 def noreply_address(host):
     """Sender of Matomo emails: noreply@ the domain of the Matomo host name
     (matomo.example.org -> example.org), which is far more likely to pass
-    SPF than Matomo's default noreply@<host name>."""
+    SPF than Matomo's default noreply@<host name>. If stripping the first
+    label would leave a public suffix (matomo.co.uk -> co.uk) or the host has
+    fewer than three labels, the host name itself is used."""
     labels = host.split(".")
-    domain = ".".join(labels[1:]) if len(labels) > 2 else host
-    return "noreply@" + domain
+    domain = labels[1:]
+    if len(labels) < 3 or (len(domain) == 2 and domain[0] in COUNTRY_SECOND_LEVEL):
+        return "noreply@" + host
+    return "noreply@" + ".".join(domain)
 
 
 def general_section():
