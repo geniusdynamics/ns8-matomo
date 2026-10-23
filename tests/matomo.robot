@@ -38,6 +38,19 @@ Check if the web installer is closed
     ...    return_rc=True
     Should Contain    ${output}    form_login
 
+Check if the visitor address and the email sender are configured
+    ${network} =    Execute Command    runagent python3 -c 'import agent; print(agent.redis_connect(use_replica=True).get("cluster/network"))'
+    ${output}  ${rc} =    Execute Command    runagent -m ${module_id} cat common.config.ini.php
+    ...    return_rc=True
+    Should Be Equal As Integers    ${rc}  0
+    Should Contain    ${output}    proxy_ips[] = "${network}"
+    Should Contain    ${output}    noreply_email_address = "noreply@test.local"
+    # the test cluster has no smarthost: Matomo gets no [mail] section
+    ${smarthost} =    Execute Command    api-cli run cluster/get-smarthost
+    IF    '"enabled": false' in '''${smarthost}'''
+        Should Not Contain    ${output}    [mail]
+    END
+
 Check if PHP in the app container has the PHP2Shell fix
     ${output}  ${rc} =    Execute Command    runagent -m ${module_id} podman exec matomo-app php -r '$f = ["8.2" => "8.2.35", "8.3" => "8.3.36", "8.4" => "8.4.27", "8.5" => "8.5.12"]; $b = PHP_MAJOR_VERSION . "." . PHP_MINOR_VERSION; echo isset($f[$b]) && version_compare(PHP_VERSION, $f[$b], ">=") ? "ok" : PHP_VERSION;'
     ...    return_rc=True
