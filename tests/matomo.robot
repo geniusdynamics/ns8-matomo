@@ -51,6 +51,19 @@ Check if the visitor address and the email sender are configured
         Should Not Contain    ${output}    [mail]
     END
 
+Check if INI values with special characters are read back unchanged
+    # "${", quotes and backslashes in passwords must not change or break the
+    # configuration: ini_value() in the module, Matomo's IniReader in the app
+    Put File    ${CURDIR}/ini-roundtrip.py    /tmp/ini-roundtrip.py
+    Put File    ${CURDIR}/ini-roundtrip.php    /tmp/ini-roundtrip.php
+    ${rc} =    Execute Command    runagent -m ${module_id} podman cp /tmp/ini-roundtrip.php matomo-app:/tmp/ini-roundtrip.php
+    ...    return_rc=True  return_stdout=False
+    Should Be Equal As Integers    ${rc}  0
+    ${output}  ${rc} =    Execute Command    runagent -m ${module_id} python3 - < /tmp/ini-roundtrip.py | runagent -m ${module_id} podman exec -i matomo-app php /tmp/ini-roundtrip.php
+    ...    return_rc=True
+    Should Be Equal As Integers    ${rc}  0
+    Should Be Equal As Strings    ${output}    ok
+
 Check if PHP in the app container has the PHP2Shell fix
     ${output}  ${rc} =    Execute Command    runagent -m ${module_id} podman exec matomo-app php -r '$f = ["8.2" => "8.2.35", "8.3" => "8.3.36", "8.4" => "8.4.27", "8.5" => "8.5.12"]; $b = PHP_MAJOR_VERSION . "." . PHP_MINOR_VERSION; echo isset($f[$b]) && version_compare(PHP_VERSION, $f[$b], ">=") ? "ok" : PHP_VERSION;'
     ...    return_rc=True
