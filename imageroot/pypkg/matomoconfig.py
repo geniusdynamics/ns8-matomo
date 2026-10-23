@@ -14,6 +14,7 @@ private) and not part of the backup (etc/state-include.conf).
 """
 
 import os
+import sys
 
 import ldapsettings
 
@@ -137,7 +138,8 @@ def cluster_network():
     try:
         import agent
         return agent.redis_connect(use_replica=True).get("cluster/network") or ""
-    except Exception:
+    except Exception as exc:
+        print(f"<4>cluster network unknown, proxy_ips not set: {exc}", file=sys.stderr)
         return ""
 
 
