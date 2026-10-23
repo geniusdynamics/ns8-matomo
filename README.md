@@ -7,7 +7,9 @@ The module is based on the official [Matomo Docker image](https://github.com/mat
 ## Features
 
 - Matomo on Apache/PHP with a MariaDB database, behind the NS8 Traefik proxy
-  (visitor addresses are read from `X-Forwarded-For`)
+  (visitor addresses are read from `X-Forwarded-For`, also when Matomo is
+  published through the Traefik of another node)
+- Emails (reports, password reset) go out through the cluster smarthost
 - Installation without the public web installer: the first configuration
   creates the super user
 - Login with a user domain of the cluster or an LDAP server (LoginLdap plugin),
@@ -140,13 +142,40 @@ Matomo volumes, the environment files and `state/passwords.env`. Restore loads
 the dump into a new, empty database volume and configures the Traefik route
 and the directory login again.
 
-## Smarthost Setting Discovery
+## Email and smarthost
 
-Some configuration settings, like the smarthost setup, are not part of the `configure-module` action input: they are discovered by looking at some Redis keys. To ensure the module is always up-to-date with the centralized [smarthost setup](https://geniusdynamics.github.io/ns8-core/core/smarthost/) every time Matomo starts, the command `bin/discover-smarthost` runs and refreshes the `state/smarthost.env` file with fresh values from Redis.
+Matomo sends its emails through the cluster [smarthost](https://geniusdynamics.github.io/ns8-core/core/smarthost/).
+The smarthost settings are not part of the `configure-module` input: every
+time Matomo starts, `bin/discover-smarthost` reads them from Redis into
+`state/smarthost.env`, and `bin/matomo-config` writes them to the `[mail]`
+section of `config/common.config.ini.php`. While the smarthost is off there is
+no `[mail]` section and Matomo cannot send emails. When the smarthost changes,
+`events/smarthost-changed/10reload_services` restarts Matomo, which writes the
+settings again.
 
-Furthermore if smarthost setup is changed when Matomo is already running, the event handler `events/smarthost-changed/10reload_services` restarts the main module service.
+- Encryption follows the cluster setting (`none`, STARTTLS or TLS); `none` also
+  stops Matomo from switching to STARTTLS on its own.
+- The certificate of the mail server is checked only when the cluster asks for
+  it (`tls_verify`). A smarthost found automatically is the VPN address of the
+  mail server, and its certificate names the host, so the name check could not
+  pass for it.
+- The sender is `noreply@` the domain of the Matomo host name
+  (`matomo.example.org` sends as `noreply@example.org`).
+- Mail settings and the sender changed in the Matomo UI are stored in
+  `config.ini.php` and take precedence over the generated ones.
+- Test the delivery with
+  `runagent -m matomo1 podman exec -u www-data matomo-app ./console core:test-email you@example.org`.
 
-See also the `systemd/user/matomo.service` file.
+## Visitor address behind a gateway node
+
+A Matomo instance on a worker node is often published through the Traefik of
+another node (a route to the worker's VPN address). The worker's Traefik then
+appends the gateway's VPN address to `X-Forwarded-For`, and Matomo, which
+reads the last address of the list, would record every visit with it. The
+module therefore lists the cluster VPN network (`cluster/network`) in
+`proxy_ips[]`, so Matomo skips it. A gateway that reaches the node through
+another address, e.g. its LAN address, has to be added to `proxy_ips[]` in the
+Matomo configuration.
 
 ## Update
 
