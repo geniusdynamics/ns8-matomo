@@ -1,0 +1,16 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (C) 2026 Nethesis S.r.l.
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+# ExecStartPre of matomo-app (through runagent): write the Matomo settings
+# managed by the module (pypkg/matomoconfig.py) to state/common.config.ini.php
+# and state/ldap.env. They are read again at every start, so a changed bind
+# password of a user domain is picked up by a restart
+# (events/user-domain-changed).
+
+import matomoconfig
+
+matomoconfig.write()

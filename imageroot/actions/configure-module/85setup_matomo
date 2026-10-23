@@ -1,0 +1,127 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (C) 2026 Nethesis S.r.l.
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+# First configuration: install Matomo with the administrator account from the
+# request, so the public web installer is never left open. The installer
+# pages are driven over the module's local port, the password is not stored.
+# Then apply the module settings inside Matomo (bin/matomo-sync).
+
+import http.cookiejar
+import json
+import os
+import subprocess
+import sys
+import time
+import urllib.parse
+import urllib.request
+
+import agent
+
+data = json.load(sys.stdin)
+
+
+def installed():
+    return subprocess.run(["podman", "exec", "matomo-app", "grep", "-qs", r"^\[database\]",
+                           "/var/www/html/config/config.ini.php"]).returncode == 0
+
+
+class Installer:
+    def __init__(self, host):
+        self.base = "http://127.0.0.1:" + os.environ["TCP_PORT"] + "/index.php"
+        self.host = host
+        self.opener = urllib.request.build_opener(
+            urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
+
+    def request(self, action, form=None, query=None):
+        params = {"module": "Installation", "action": action}
+        params.update(query or {})
+        url = self.base + "?" + urllib.parse.urlencode(params)
+        body = None
+        if form is not None:
+            body = urllib.parse.urlencode(form).encode()
+        req = urllib.request.Request(url, data=body, headers={"Host": self.host})
+        with self.opener.open(req, timeout=120) as resp:
+            return resp.geturl(), resp.read().decode("utf-8", "replace")
+
+    def step(self, action, form, formname, expect, query=None):
+        form = dict(form)
+        form["_qf__" + formname] = ""
+        form["submit"] = "Next"
+        url, page = self.request(action, form, query)
+        if "action=" + expect not in url:
+            raise RuntimeError(f"installation step {action} failed")
+        return page
+
+
+def wait_ready(host, timeout=300):
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        try:
+            req = urllib.request.Request("http://127.0.0.1:" + os.environ["TCP_PORT"] + "/",
+                                         headers={"Host": host})
+            urllib.request.urlopen(req, timeout=10).read()
+            return
+        except urllib.error.HTTPError:
+            return
+        except Exception:
+            time.sleep(3)
+    raise TimeoutError("Matomo does not answer")
+
+
+host = os.environ.get("TRAEFIK_HOST", "")
+if not installed():
+    login = (data.get("admin_user") or "").strip()
+    password = data.get("admin_password") or ""
+    if not (login and password):
+        print(agent.SD_WARNING + "Matomo is not installed: set the administrator account in the module "
+              "settings, or finish the web installer at https://" + host + "/", file=sys.stderr)
+        sys.exit(0)
+
+    wait_ready(host)
+    inst = Installer(host)
+    inst.request("databaseSetup")
+    # the database fields are prefilled from the container environment
+    # (MATOMO_DATABASE_*); the masked password stands for that value
+    inst.step("databaseSetup", {
+        "host": "matomo-mariadb",
+        "username": "matomo",
+        "password": "**********",
+        "dbname": "matomo",
+        "tables_prefix": "matomo",
+        "adapter": "PDO\\MYSQL",
+        "schema": "Mariadb",
+    }, "databasesetupform", "tablesCreation")  # the redirect creates the tables
+    inst.step("setupSuperUser", {
+        "login": login,
+        "password": password,
+        "password_bis": password,
+        "email": (data.get("admin_email") or "").strip(),
+    }, "generalsetupform", "firstWebsiteSetup")
+    timezone = os.environ.get("MATOMO_TIMEZONE", "UTC")
+    site_url = (data.get("site_url") or "").strip() or "https://" + host
+    site_name = (data.get("site_name") or "").strip() or urllib.parse.urlparse(site_url).hostname or host
+    inst.step("firstWebsiteSetup", {
+        "siteName": site_name,
+        "url": site_url,
+        # Matomo knows the region time zones and UTC, not the Etc/ aliases
+        "timezone": timezone if "/" in timezone and not timezone.startswith("Etc/") else "UTC",
+        "ecommerce": "0",
+    }, "websitesetupform", "trackingCode")
+    query = {"site_idSite": "1", "site_name": site_name}
+    inst.request("finished", {
+        "_qf__defaultsettingsform": "",
+        "anonymise_ip": "1",
+        "setup_geoip2": "0",
+        "submit": "Continue",
+    }, query)
+    if not installed():
+        agent.set_status("validation-failed")
+        print("Matomo installation failed", file=sys.stderr)
+        sys.exit(1)
+    print("Matomo installed, administrator: " + login, file=sys.stderr)
+
+subprocess.run(["matomo-sync"], check=True)

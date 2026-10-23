@@ -7,14 +7,7 @@
         {
             "host": "matomo.domain.org",
             "http2https": true,
-            "lets_encrypt": true,
-            "matomo_database_username": "",
-            "matomo_database_password": "",
-            "matomo_database_dbname": "matomo",
-            "mariadb_auto_upgrade": "1",
-            "mariadb_disable_upgrade_backup": "0",
-            "matomo_database_tables_prefix": "matomo",
-            "matomo_database_adapter": "mysql"
+            "lets_encrypt": true
         }
     ],
     "type": "object",
@@ -39,25 +32,75 @@
             "title": "HTTP to HTTPS redirection",
             "description": "Redirect all the HTTP requests to HTTPS"
         },
-        "mariadb_auto_upgrade": {
+        "ldap_enabled": {
             "type": "boolean",
-            "title": "Mariadb auto upgrade",
-            "description": "mariadb aut upgrade"
+            "title": "Login with a user domain or LDAP server"
         },
-        "mariadb_disable_upgrade_backup": {
+        "ldap_view_access": {
+            "type": "string",
+            "enum": [
+                "none",
+                "all"
+            ],
+            "description": "View access of a new LDAP user: none, or all websites"
+        },
+        "ldap_source": {
+            "type": "string",
+            "enum": [
+                "domain",
+                "custom"
+            ]
+        },
+        "ldap_domain": {
+            "type": "string",
+            "maxLength": 253
+        },
+        "ldap_group": {
+            "type": "string",
+            "description": "Only members of this group may log in (Active Directory)"
+        },
+        "ldap_url": {
+            "type": "string",
+            "maxLength": 512
+        },
+        "ldap_start_tls": {
+            "type": "boolean"
+        },
+        "ldap_tls_verify": {
+            "type": "boolean"
+        },
+        "ldap_schema": {
+            "type": "string",
+            "enum": [
+                "ad",
+                "rfc2307"
+            ]
+        },
+        "ldap_base_dn": {
+            "type": "string",
+            "maxLength": 512
+        },
+        "ldap_bind_dn": {
+            "type": "string",
+            "maxLength": 512
+        },
+        "ldap_user_attribute": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[A-Za-z0-9-]*$"
+        },
+        "installed": {
             "type": "boolean",
-            "title": "Mariadb disable upgrade backup",
-            "description": "Mariadb disable upgrade backup"
+            "description": "Matomo is installed (the administrator account exists)"
         },
-        "matomo_database_tables_prefix": {
-            "type": "string",
-            "title": "matomo database prefix",
-            "description": "matomo database prefix"
+        "ldap_bind_password_set": {
+            "type": "boolean"
         },
-        "matomo_database_adapter": {
-            "type": "string",
-            "title": "matomo database adaptor",
-            "description": "matomo database adaptor"
+        "user_domains": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
         }
     }
 }

@@ -1,0 +1,60 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (C) 2026 Nethesis S.r.l.
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+# Checks that need the module state: the administrator account of the first
+# installation and the directory login settings.
+
+import json
+import os
+import re
+import sys
+
+import agent
+import ldapsettings
+
+agent.set_weight(os.path.basename(__file__), 0)
+
+data = json.load(sys.stdin)
+errors = []
+
+
+def fail(field, value, error):
+    errors.append({"field": field, "parameter": field, "value": value, "error": error})
+
+
+login = (data.get("admin_user") or "").strip()
+if login and not re.fullmatch(r"[A-Za-z0-9_.@-]{2,100}", login):
+    fail("admin_user", login, "admin_user_invalid")
+if login and len(data.get("admin_password") or "") < 12:
+    fail("admin_password", "", "admin_password_too_short")
+if login and not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", (data.get("admin_email") or "").strip()):
+    fail("admin_email", data.get("admin_email", ""), "admin_email_invalid")
+
+ldap_enabled = data.get("ldap_enabled", os.environ.get("LDAP_ENABLED") == "true")
+# a request without directory fields (e.g. only the host) keeps the stored ones
+ldap_fields = any(key.startswith("ldap_") and key not in ("ldap_enabled", "ldap_view_access") for key in data)
+for field, error in ldapsettings.validate(data, active=ldap_enabled and ldap_fields):
+    fail(field, data.get(field, "") if field != "ldap_bind_password" else "", error)
+if ldap_enabled and not ldap_fields and not ldapsettings.complete():
+    fail("ldap_enabled", True, "ldap_settings_missing")
+
+# Group restriction relies on the memberOf attribute of Active Directory
+if ldap_enabled and ldap_fields and (data.get("ldap_group") or "").strip():
+    schema = data.get("ldap_schema") or "ad"
+    if (data.get("ldap_source") or "domain") == "domain" and data.get("ldap_domain"):
+        try:
+            from agent.ldapproxy import Ldapproxy
+            schema = (Ldapproxy().get_domain(data["ldap_domain"]) or {}).get("schema", "ad")
+        except Exception:
+            pass
+    if schema != "ad":
+        fail("ldap_group", data["ldap_group"], "ldap_group_requires_ad")
+
+if errors:
+    agent.set_status("validation-failed")
+    json.dump(errors, fp=sys.stdout)
+    sys.exit(2)

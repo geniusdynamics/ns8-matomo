@@ -1,57 +1,119 @@
 {
-    "error": {
-        "403": "Operation nicht zugelassen",
-        "cannot_retrieve_installed_modules": "installierte Module nicht abrufbar",
-        "401": "fehlerhafte Anmeldung",
-        "cannot_retrieve_module_info": "Modulinfo nicht abrufbar",
-        "generic_error": "Etwas ist schief gegangen",
-        "error": "Fehler",
-        "network_timeout": "Netzwerk Timeout",
-        "404": "Ressource nicht gefunden",
-        "network_error": "Netzwerkfehler",
-        "validation_error": "Fehlerhafte Prüfung"
-    },
-    "settings": {
-        "test_field": "Testfeld",
-        "configure_instance": "{instance} konfigurieren",
-        "save": "Speichern",
-        "title": "Einstellungen"
-    },
-    "common": {
-        "required": "erforderlich",
-        "work_in_progress": "In Arbeit",
-        "processing": "Ausführung..."
-    },
-    "status": {
-        "created": "erstellt",
-        "size": "Größe",
-        "name": "Name",
-        "no_images": "Keine Abbilder",
-        "app_volumes": "App Volumen | App Volumen",
-        "services": "Dienst | Dienste",
-        "app_images": "App-Abbild | App-Abbilder",
-        "no_services": "Keine Dienste",
-        "app_instance": "App-Instanz",
-        "mount": "Einbindepunkt",
-        "title": "Status",
-        "installation_node": "Knoten der Installation",
-        "node": "Knoten",
-        "no_volumes": "keine Volumen"
-    },
-    "about": {
-        "title": "Über"
-    },
-    "action": {
-        "list-backup-repositories": "Liste der Datensicherungs-Speicherort",
-        "get-module-info": "Informationen zum Modul abrufen",
-        "list-installed-modules": "installierte Module auflisten",
-        "list-backups": "Datensicherungen auflisten",
-        "get-status": "Status abfragen",
-        "configure-module": "Modul konfigurieren",
-        "get-configuration": "Konfiguration abrufen",
-        "get-name": "Name abrufen"
-    },
-    "task": {
-        "cannot_create_task": "{task} kann nicht erstellt werden"
-    }
+  "error": {
+    "403": "Operation nicht zugelassen",
+    "cannot_retrieve_installed_modules": "installierte Module nicht abrufbar",
+    "401": "fehlerhafte Anmeldung",
+    "cannot_retrieve_module_info": "Modulinfo nicht abrufbar",
+    "generic_error": "Etwas ist schief gegangen",
+    "error": "Fehler",
+    "network_timeout": "Netzwerk Timeout",
+    "404": "Ressource nicht gefunden",
+    "network_error": "Netzwerkfehler",
+    "validation_error": "Fehlerhafte Prüfung"
+  },
+  "settings": {
+    "test_field": "Testfeld",
+    "configure_instance": "{instance} konfigurieren",
+    "save": "Speichern",
+    "title": "Einstellungen",
+    "admin_title": "Administrator-Konto",
+    "admin_intro": "Matomo wird beim ersten Speichern mit diesem Superuser installiert, der Web-Installer ist so nie offen erreichbar. NS8 speichert das Passwort nicht.",
+    "admin_user": "Benutzername",
+    "admin_password": "Passwort",
+    "admin_password_helper": "Mindestens 12 Zeichen",
+    "admin_email": "E-Mail-Adresse",
+    "site_url": "Erste Website für die Auswertung (optional)",
+    "site_url_helper": "Vorgabe: der Matomo-Hostname. Weitere Websites lassen sich in Matomo anlegen.",
+    "admin_user_invalid": "Buchstaben, Ziffern und . _ @ - (2 bis 100 Zeichen)",
+    "admin_password_too_short": "Mindestens 12 Zeichen",
+    "admin_email_invalid": "Gültige E-Mail-Adresse eingeben",
+    "login_title": "Anmeldung",
+    "ldap_enabled": "Anmeldung über Benutzerdomäne oder LDAP-Server",
+    "ldap_intro": "Benutzer melden sich mit ihrem Domänenkonto an Matomo an (Plugin LoginLdap). Lokale Matomo-Konten wie der Administrator funktionieren weiter.",
+    "ldap_view_access": "Zugriff eines neuen Domänenbenutzers",
+    "ldap_view_access_helper": "Wird bei der ersten Anmeldung vergeben. Superuser können ihn in Matomo je Benutzer ändern.",
+    "ldap_view_access_none": "Kein Zugriff, bis er in Matomo vergeben wird",
+    "ldap_view_access_all": "Lesezugriff auf alle Websites"
+  },
+  "common": {
+    "required": "erforderlich",
+    "work_in_progress": "In Arbeit",
+    "processing": "Ausführung...",
+    "enabled": "Aktiviert",
+    "disabled": "Deaktiviert"
+  },
+  "status": {
+    "created": "erstellt",
+    "size": "Größe",
+    "name": "Name",
+    "no_images": "Keine Abbilder",
+    "app_volumes": "App Volumen | App Volumen",
+    "services": "Dienst | Dienste",
+    "app_images": "App-Abbild | App-Abbilder",
+    "no_services": "Keine Dienste",
+    "app_instance": "App-Instanz",
+    "mount": "Einbindepunkt",
+    "title": "Status",
+    "installation_node": "Knoten der Installation",
+    "node": "Knoten",
+    "no_volumes": "keine Volumen"
+  },
+  "about": {
+    "title": "Über"
+  },
+  "action": {
+    "list-backup-repositories": "Liste der Datensicherungs-Speicherort",
+    "get-module-info": "Informationen zum Modul abrufen",
+    "list-installed-modules": "installierte Module auflisten",
+    "list-backups": "Datensicherungen auflisten",
+    "get-status": "Status abfragen",
+    "configure-module": "Modul konfigurieren",
+    "get-configuration": "Konfiguration abrufen",
+    "get-name": "Name abrufen",
+    "list-ldap-groups": "Gruppen auflisten"
+  },
+  "task": {
+    "cannot_create_task": "{task} kann nicht erstellt werden"
+  },
+  "ldap_login": {
+    "source": "Verzeichnis",
+    "source_domain": "Benutzerdomäne dieses Clusters (empfohlen)",
+    "source_custom": "Eigener LDAP-Server (erweitert)",
+    "no_domains": "Dieser Cluster hat noch keine Benutzerdomäne. Lege eine unter Domänen und Benutzer an oder trage einen LDAP-Server ein.",
+    "domain": "Benutzerdomäne",
+    "group": "Gruppe (optional)",
+    "group_placeholder": "Alle Benutzer der Domäne",
+    "loading_groups": "Gruppen werden geladen…",
+    "group_helper": "Nur Mitglieder dieser Gruppe dürfen sich anmelden (verschachtelte Gruppen zählen mit). Leer: alle Benutzer der Domäne. Nur Active Directory.",
+    "group_custom_helper": "Gruppenname oder DN; nur deren Mitglieder dürfen sich anmelden. Leer: alle Benutzer unterhalb der Basis-DN. Nur Active Directory.",
+    "custom_intro": "Nur nötig für ein Verzeichnis, das keine Benutzerdomäne dieses Clusters ist. NS8 kann ein fremdes AD/LDAP auch als Benutzerdomäne einbinden (Domänen und Benutzer): Dann erscheint es oben, und hier werden keine Zugangsdaten gespeichert.",
+    "url": "URL des LDAP-Servers",
+    "url_helper": "ldaps://host:636 oder ldap://host:389 mit StartTLS",
+    "start_tls": "StartTLS",
+    "tls_verify": "Serverzertifikat prüfen",
+    "tls_verify_off": "Das Zertifikat wird nicht geprüft: Jemand auf dem Netzweg könnte die Passwörter mitlesen. Nur für Tests oder ein vertrauenswürdiges Netz.",
+    "schema": "Verzeichnistyp",
+    "schema_ad": "Active Directory / Samba",
+    "schema_rfc2307": "OpenLDAP (posixAccount)",
+    "base_dn": "Base DN",
+    "bind_dn": "Bind DN (Dienstkonto)",
+    "bind_password": "Bind-Passwort",
+    "bind_password_helper": "Passwort des Dienstkontos; wird ausserhalb der Modulumgebung gespeichert.",
+    "user_attribute": "Anmeldeattribut (optional)",
+    "user_attribute_helper": "Leer: sAMAccountName (Active Directory) bzw. uid (OpenLDAP)",
+    "secret_keep": "•••••••• (unverändert)",
+    "secret_is_set": "Ein Passwort ist gespeichert — leer lassen, um es zu behalten.",
+    "show": "Anzeigen",
+    "hide": "Verbergen",
+    "list_groups": "Gruppen auflisten",
+    "ldap_domain_required": "Benutzerdomäne auswählen",
+    "ldap_domain_unknown": "Diese Benutzerdomäne gibt es im Cluster nicht",
+    "ldap_url_invalid": "ldaps://host[:port] oder ldap://host[:port] eingeben",
+    "start_tls_with_ldaps": "StartTLS gibt es nur für ldap://-URLs",
+    "ldap_base_dn_required": "Erforderlich",
+    "ldap_bind_dn_required": "Erforderlich",
+    "ldap_bind_password_required": "Erforderlich",
+    "ldap_group_requires_ad": "Eine Anmeldegruppe setzt ein Active Directory voraus (memberOf)",
+    "ldap_settings_missing": "Verzeichnis-Einstellungen vervollständigen"
+  }
 }

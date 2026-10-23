@@ -1,0 +1,41 @@
+#!/bin/bash
+
+#
+# Copyright (C) 2026 Nethesis S.r.l.
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+# ExecStartPost of matomo-app and last step of configure-module: once Matomo
+# is installed, apply the module settings that live in Matomo's database or
+# config.ini.php:
+#  - run the database upgrade after a new Matomo version was copied in by the
+#    container entrypoint
+#  - accept the configured host name (trusted_hosts)
+#  - activate or deactivate the LoginLdap plugin
+# Before the installation (no config.ini.php yet) there is nothing to do.
+
+set -e
+exec 1>&2
+
+console() {
+    podman exec -u www-data matomo-app php /var/www/html/console --no-ansi -n "$@"
+}
+
+if ! podman exec matomo-app grep -qs '^\[database\]' /var/www/html/config/config.ini.php; then
+    echo "Matomo is not installed yet"
+    exit 0
+fi
+
+python3 -c 'import agent; agent.set_env("MATOMO_INSTALLED", "1")'
+
+console core:update --yes
+if [[ -n "${TRAEFIK_HOST}" ]] &&
+        ! console config:get --section=General --key=trusted_hosts --format=json | grep -qF "\"${TRAEFIK_HOST}\""; then
+    console config:set "General.trusted_hosts[]=\"${TRAEFIK_HOST}\""
+fi
+
+if [[ "${LDAP_ENABLED}" == "true" ]] && grep -q '^\[LoginLdap_ns8\]' common.config.ini.php; then
+    console plugin:activate LoginLdap
+elif console plugin:list 2>/dev/null | grep -Eq '^\| LoginLdap +\|.*\| Activated'; then
+    console plugin:deactivate LoginLdap
+fi

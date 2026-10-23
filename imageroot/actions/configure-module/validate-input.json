@@ -7,14 +7,22 @@
         {
             "host": "matomo.domain.org",
             "http2https": true,
+            "lets_encrypt": true
+        },
+        {
+            "host": "matomo.domain.org",
+            "http2https": true,
             "lets_encrypt": true,
-            "matomo_database_username": "",
-            "matomo_database_password": "",
-            "matomo_database_dbname": "matomo",
-            "mariadb_auto_upgrade": "1",
-            "mariadb_disable_upgrade_backup": "0",
-            "matomo_database_tables_prefix": "matomo",
-            "matomo_database_adapter": "mysql"
+            "admin_user": "admin",
+            "admin_password": "a long secret password",
+            "admin_email": "admin@domain.org",
+            "site_name": "Example",
+            "site_url": "https://www.domain.org",
+            "ldap_enabled": true,
+            "ldap_view_access": "none",
+            "ldap_source": "domain",
+            "ldap_domain": "ad.domain.org",
+            "ldap_group": "matomo-users"
         }
     ],
     "type": "object",
@@ -40,25 +48,92 @@
             "title": "HTTP to HTTPS redirection",
             "description": "Redirect all the HTTP requests to HTTPS"
         },
-        "mariadb_auto_upgrade": {
-            "type": "boolean",
-            "title": "Mariadb auto upgrade",
-            "description": "mariadb aut upgrade"
-        },
-        "mariadb_disable_upgrade_backup": {
-            "type": "boolean",
-            "title": "Mariadb disable upgrade backup",
-            "description": "Mariadb disable upgrade backup"
-        },
-        "matomo_database_tables_prefix": {
+        "admin_user": {
             "type": "string",
-            "title": "matomo database prefix",
-            "description": "matomo database prefix"
+            "maxLength": 100,
+            "description": "Matomo super user, created on the first configuration only"
         },
-        "matomo_database_adapter": {
+        "admin_password": {
             "type": "string",
-            "title": "matomo database adaptor",
-            "description": "matomo database adaptor"
+            "maxLength": 200,
+            "description": "Password of the super user (first configuration only, not stored)"
+        },
+        "admin_email": {
+            "type": "string",
+            "maxLength": 254
+        },
+        "site_name": {
+            "type": "string",
+            "maxLength": 90,
+            "description": "First website (first configuration only)"
+        },
+        "site_url": {
+            "type": "string",
+            "maxLength": 512,
+            "pattern": "^(https?://[^\\s]+)?$"
+        },
+        "ldap_enabled": {
+            "type": "boolean",
+            "title": "Login with a user domain or LDAP server"
+        },
+        "ldap_view_access": {
+            "type": "string",
+            "enum": [
+                "none",
+                "all"
+            ],
+            "description": "View access of a new LDAP user: none, or all websites"
+        },
+        "ldap_source": {
+            "type": "string",
+            "enum": [
+                "domain",
+                "custom"
+            ]
+        },
+        "ldap_domain": {
+            "type": "string",
+            "maxLength": 253
+        },
+        "ldap_group": {
+            "type": "string",
+            "maxLength": 512,
+            "description": "Only members of this group may log in (Active Directory)"
+        },
+        "ldap_url": {
+            "type": "string",
+            "maxLength": 512
+        },
+        "ldap_start_tls": {
+            "type": "boolean"
+        },
+        "ldap_tls_verify": {
+            "type": "boolean"
+        },
+        "ldap_schema": {
+            "type": "string",
+            "enum": [
+                "ad",
+                "rfc2307"
+            ]
+        },
+        "ldap_base_dn": {
+            "type": "string",
+            "maxLength": 512
+        },
+        "ldap_bind_dn": {
+            "type": "string",
+            "maxLength": 512
+        },
+        "ldap_bind_password": {
+            "type": "string",
+            "maxLength": 512,
+            "description": "Write only; empty keeps the stored password"
+        },
+        "ldap_user_attribute": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[A-Za-z0-9-]*$"
         }
     }
 }
