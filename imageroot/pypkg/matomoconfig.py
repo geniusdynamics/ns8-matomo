@@ -37,7 +37,10 @@ def ini_value(value):
     value = str(value)
     if "\n" in value or "\r" in value:
         raise ValueError("line breaks are not allowed in INI values")
-    return '"' + value.replace("\\", "\\\\").replace('"', '\\"') + '"'
+    # PHP's INI scanner expands ${VAR} inside double quotes: escape it, or a
+    # password with "${" is silently changed or breaks the whole file
+    escaped = value.replace("\\", "\\\\").replace('"', '\\"').replace("${", "\\${")
+    return '"' + escaped + '"'
 
 
 def ldap_filter_escape(value):
