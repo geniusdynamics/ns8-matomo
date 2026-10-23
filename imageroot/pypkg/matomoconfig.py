@@ -129,6 +129,15 @@ def ldap_sections(conn):
     ]
 
 
+def cluster_network():
+    """The cluster VPN network (e.g. 10.5.4.0/24), or "" if unknown."""
+    try:
+        import agent
+        return agent.redis_connect(use_replica=True).get("cluster/network") or ""
+    except Exception:
+        return ""
+
+
 def noreply_address(host):
     """Sender of Matomo emails: noreply@ the domain of the Matomo host name
     (matomo.example.org -> example.org), which is far more likely to pass
@@ -148,6 +157,13 @@ def general_section():
         "proxy_scheme_headers[] = HTTP_X_FORWARDED_PROTO",
         "proxy_ip_read_last_in_list = 1",
     ]
+    # Published through the Traefik of another node, the Traefik of this
+    # node trusts that gateway and appends its VPN address to
+    # X-Forwarded-For: skip the cluster VPN, or every visitor would be
+    # recorded with the address of the gateway node.
+    network = cluster_network()
+    if network:
+        lines.append(f"proxy_ips[] = {ini_value(network)}")
     host = os.environ.get("TRAEFIK_HOST", "")
     if host:
         lines.append(f"noreply_email_address = {ini_value(noreply_address(host))}")
