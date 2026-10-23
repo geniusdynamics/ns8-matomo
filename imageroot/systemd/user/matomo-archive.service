@@ -1,0 +1,21 @@
+#
+# Copyright (C) 2026 Nethesis S.r.l.
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+# Build the Matomo reports in the background (matomo-archive.timer), as
+# recommended for every installation that is not tiny: browser triggered
+# archiving makes the dashboards slow.
+
+[Unit]
+Description=Matomo report archiving
+Requisite=matomo-app.service
+After=matomo-app.service
+
+[Service]
+Type=oneshot
+EnvironmentFile=%S/state/environment
+WorkingDirectory=%S/state
+ExecCondition=/usr/bin/podman exec matomo-app grep -qs "^\\[database\\]" /var/www/html/config/config.ini.php
+ExecStart=/usr/bin/podman exec -u www-data matomo-app php /var/www/html/console --no-ansi -n core:archive --url=https://${TRAEFIK_HOST}/
+SyslogIdentifier=%u

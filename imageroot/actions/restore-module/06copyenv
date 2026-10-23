@@ -11,13 +11,34 @@ import agent
 
 request = json.load(sys.stdin)
 
-original_environment = request['environment']
+if "environment" in request:
+    # restore-module: the environment of the backup comes with the request
+    original_environment = request["environment"]
+else:
+    # clone-module (this file is linked there as 20copyenv): the core imports
+    # only the variables the new instance does not have yet and leaves the
+    # source environment in state/environment.clone-module
+    original_environment = agent.read_envfile("environment.clone-module")
 
 for evar in [
         "TRAEFIK_HOST",
         "TRAEFIK_HTTP2HTTPS",
         "TRAEFIK_LETS_ENCRYPT",
+        "MATOMO_TIMEZONE",
+        "LDAP_ENABLED",
+        "LDAP_VIEW_ACCESS",
+        "LDAP_SOURCE",
+        "LDAP_DOMAIN",
+        "LDAP_GROUP",
+        "LDAP_URL",
+        "LDAP_START_TLS",
+        "LDAP_TLS_VERIFY",
+        "LDAP_SCHEMA",
+        "LDAP_BASE_DN",
+        "LDAP_BIND_DN",
+        "LDAP_USER_ATTRIBUTE",
     ]:
-    agent.set_env(evar, original_environment[evar])
+    if evar in original_environment:
+        agent.set_env(evar, original_environment[evar])
 
 agent.dump_env()

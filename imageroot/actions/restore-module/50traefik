@@ -5,17 +5,31 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 
+# Re-create the Traefik route and the directory login from the settings
+# copied by 06copyenv. The
+# environment is used instead of request['environment'] because this step is
+# linked into clone-module too, whose request has no environment.
+
 import sys
-import json
 import agent
 import os
 
-request = json.load(sys.stdin)
-renv = request['environment']
+import ldapsettings
 
-configure_retval = agent.tasks.run(agent_id=os.environ['AGENT_ID'], action='configure-module', data={
-    "lets_encrypt": renv["TRAEFIK_LETS_ENCRYPT"] == "True",
-    "host": renv["TRAEFIK_HOST"],
-    "http2https": renv["TRAEFIK_HTTP2HTTPS"] == "True",
-})
+host = os.environ.get("TRAEFIK_HOST", "")
+if not host:
+    print(agent.SD_NOTICE + "no host name in the original settings: configure the module from the UI", file=sys.stderr)
+    sys.exit(0)
+
+request = {
+    "lets_encrypt": os.environ.get("TRAEFIK_LETS_ENCRYPT", "True") == "True",
+    "host": host,
+    "http2https": os.environ.get("TRAEFIK_HTTP2HTTPS", "True") == "True",
+    "ldap_enabled": os.environ.get("LDAP_ENABLED") == "true",
+    "ldap_view_access": os.environ.get("LDAP_VIEW_ACCESS", "none"),
+}
+if request["ldap_enabled"]:
+    # blank bind password: the restored state/passwords.env is kept
+    request.update(ldapsettings.restore_data())
+configure_retval = agent.tasks.run(agent_id=os.environ['AGENT_ID'], action='configure-module', data=request)
 agent.assert_exp(configure_retval['exit_code'] == 0, "The configure-module subtask failed!")

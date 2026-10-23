@@ -11,11 +11,15 @@ if ! systemctl --user -q is-active matomo.service; then
     exit 0
 fi
 
-podman exec matomo-mariadb mysqldump \
-        --databases matomo \
+# The database is backed up only as this dump: the raw mysql-data volume is
+# not in state-include.conf, so restore-module starts from an empty volume and
+# 40restore_database can load the dump through the initdb mechanism.
+podman exec matomo-mariadb /bin/sh -c 'exec mysqldump \
+        --databases "${MARIADB_DATABASE:-matomo}" \
         --default-character-set=utf8mb4 \
         --skip-dump-date \
-        --ignore-table=mysql.event \
         --single-transaction \
         --quick \
-        --add-drop-table  > matomo.sql
+        --routines \
+        --add-drop-table' > matomo.sql.tmp
+mv -f matomo.sql.tmp matomo.sql

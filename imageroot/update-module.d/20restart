@@ -12,4 +12,11 @@ set -e
 # Redirect any output to the journal (stderr)
 exec 1>&2
 
+# Instances configured before the report archiving timer existed
+if systemctl --user -q is-enabled matomo.service; then
+    systemctl --user enable --now matomo-archive.timer
+fi
+
+# The app container copies a newer Matomo release into its volume at start,
+# matomo-sync (ExecStartPost) upgrades the database
 systemctl --user try-restart matomo.service
