@@ -53,12 +53,15 @@ def group_dn(conn):
     group = conn["group"]
     if not group or "=" in group:
         return group
+    import ssl
     import ldap3
     host = conn["host"]
+    # ldap3 does not check certificates unless told to: follow the module setting
+    tls = ldap3.Tls(validate=ssl.CERT_REQUIRED if conn["tls_verify"] else ssl.CERT_NONE)
     if conn["tls"] == "ssl":
-        server = ldap3.Server(host, port=conn["port"], use_ssl=True, connect_timeout=5)
+        server = ldap3.Server(host, port=conn["port"], use_ssl=True, tls=tls, connect_timeout=5)
     else:
-        server = ldap3.Server(host, port=conn["port"], connect_timeout=5)
+        server = ldap3.Server(host, port=conn["port"], tls=tls, connect_timeout=5)
     ldapconn = ldap3.Connection(server, user=conn["bind_dn"], password=conn["bind_password"],
                                 receive_timeout=10, raise_exceptions=True)
     if conn["tls"] == "starttls":
