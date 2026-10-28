@@ -90,7 +90,8 @@ Check if the LDAP login can be enabled and disabled
 
 Check if a newer bundled plugin and other plugins survive a code update
     # LoginLdap updated through the Marketplace and a plugin that the image
-    # does not bundle must survive the restart and the copy of the Matomo code
+    # does not bundle must survive the restart and the copy of the Matomo code;
+    # files that the Matomo release does not contain are removed
     Put File    ${CURDIR}/plugin-survival.sh    /tmp/plugin-survival.sh
     ${rc} =    Execute Command    runagent -m ${module_id} podman cp /tmp/plugin-survival.sh matomo-app:/var/www/html/tmp/plugin-survival.sh
     ...    return_rc=True  return_stdout=False
@@ -104,6 +105,7 @@ Check if a newer bundled plugin and other plugins survive a code update
     ${output} =    Execute Command    runagent -m ${module_id} podman logs --since 5m matomo-app 2>&1
     Should Contain    ${output}    ns8-update-code: Matomo 5.0.0 ->
     Should Contain    ${output}    ns8-update-code: plugin LoginLdap 99.0.0 kept
+    Should Contain    ${output}    ns8-update-code: removed core/RobotGone/Gone.php
     ${output}  ${rc} =    Execute Command    runagent -m ${module_id} podman exec matomo-app sh tmp/plugin-survival.sh check
     ...    return_rc=True
     Should Be Equal As Integers    ${rc}  0

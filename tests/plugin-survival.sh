@@ -8,8 +8,12 @@
 # container is the module's state/config, which is in the backup).
 #   prepare: simulate a LoginLdap updated through the Marketplace (99.0.0), a
 #            plugin the image does not bundle, and an older Matomo code in the
-#            volume, so that the next start copies the code of the image
-#   check:   print "ok" if both plugins survived and the code was copied
+#            volume, so that the next start copies the code of the image;
+#            add files that the Matomo release does not contain and an
+#            .htaccess that Matomo would generate
+#   check:   print "ok" if both plugins survived, the code was copied, the
+#            files that are not part of the release were removed and the
+#            .htaccess was kept
 #   cleanup: restore the plugin.json of LoginLdap, remove the extra plugin
 #            and this script
 set -e
@@ -21,11 +25,17 @@ prepare)
 	mkdir -p plugins/RobotOther
 	printf '{"name": "RobotOther", "version": "1.0.0"}\n' >plugins/RobotOther/plugin.json
 	sed -i "s/const VERSION = '[^']*'/const VERSION = '5.0.0'/" core/Version.php
+	mkdir -p core/RobotGone
+	echo gone >core/RobotGone/Gone.php
+	echo gone >plugins/CoreHome/robot-gone.txt
+	[ -f core/.htaccess ] || echo "Require all denied" >core/.htaccess
 	;;
 check)
 	grep -q '"version": "99.0.0"' plugins/LoginLdap/plugin.json || { echo "LoginLdap replaced"; exit 1; }
 	[ -f plugins/RobotOther/plugin.json ] || { echo "RobotOther removed"; exit 1; }
 	! grep -q "const VERSION = '5.0.0'" core/Version.php || { echo "code not copied"; exit 1; }
+	[ ! -e core/RobotGone ] && [ ! -e plugins/CoreHome/robot-gone.txt ] || { echo "gone files kept"; exit 1; }
+	[ -f core/.htaccess ] || { echo ".htaccess removed"; exit 1; }
 	echo ok
 	;;
 cleanup)
