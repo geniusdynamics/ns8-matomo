@@ -8,8 +8,14 @@
 # image over it (config.ini.php, the module's common.config.ini.php,
 # third-party plugins and the data directories are kept) and update the
 # plugins bundled with the image (LoginLdap). An installation that is already
-# newer, e.g. updated with Matomo's own updater, is left alone.
+# newer, e.g. updated with Matomo's own updater, is left alone. The same holds
+# for a bundled plugin: a version updated through the Matomo Marketplace is
+# kept when it is newer than the one of the image. The database upgrade for
+# the copied code runs afterwards (core:update in bin/matomo-sync).
 set -e
+
+# Marketplace plugins that the image adds to /usr/src/matomo/plugins
+BUNDLED_PLUGINS="LoginLdap"
 
 version() {
 	sed -n "s/.*const VERSION = '\([^']*\)'.*/\1/p" "$1/core/Version.php" 2>/dev/null
@@ -28,22 +34,36 @@ image=$(version /usr/src/matomo)
 current=$(version .)
 if [ -n "$image" ] && { [ -z "$current" ] || newer "$image" "$current"; }; then
 	echo "ns8-update-code: Matomo ${current:-?} -> ${image}" >&2
+	# the bundled plugins are handled by the loop below, which keeps a newer
+	# version installed through the Marketplace
+	excludes=""
+	for name in $BUNDLED_PLUGINS; do
+		excludes="$excludes --exclude=./plugins/$name"
+	done
+	# shellcheck disable=SC2086 # $excludes holds one word per option
 	tar cf - --one-file-system -C /usr/src/matomo \
 		--exclude=./config/config.ini.php \
 		--exclude=./config/common.config.ini.php \
 		--exclude=./tmp \
 		--exclude=./misc/user \
+		$excludes \
 		. | tar xf - --no-overwrite-dir
 	# config/common.config.ini.php is a read-only mount of the module
 	find . -path ./config/common.config.ini.php -prune -o -exec chown www-data:www-data {} +
 fi
 
-for dir in /usr/src/matomo/plugins/LoginLdap; do
-	name=$(basename "$dir")
-	if [ "$(plugin_version "$dir")" != "$(plugin_version "plugins/$name")" ]; then
-		echo "ns8-update-code: plugin $name $(plugin_version "plugins/$name") -> $(plugin_version "$dir")" >&2
+for name in $BUNDLED_PLUGINS; do
+	dir="/usr/src/matomo/plugins/$name"
+	img=$(plugin_version "$dir")
+	cur=$(plugin_version "plugins/$name")
+	if [ -z "$img" ]; then
+		echo "ns8-update-code: plugin $name is missing in the image" >&2
+	elif [ -z "$cur" ] || newer "$img" "$cur"; then
+		echo "ns8-update-code: plugin $name ${cur:-none} -> $img" >&2
 		rm -rf "plugins/$name"
 		cp -a "$dir" "plugins/$name"
 		chown -R www-data:www-data "plugins/$name"
+	elif [ "$img" != "$cur" ]; then
+		echo "ns8-update-code: plugin $name $cur kept (image has $img)" >&2
 	fi
 done
