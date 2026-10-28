@@ -15,6 +15,7 @@
 set -e
 
 # Marketplace plugins that the image adds to /usr/src/matomo/plugins
+# (directory names without spaces or glob characters)
 BUNDLED_PLUGINS="LoginLdap"
 
 version() {
@@ -25,8 +26,10 @@ newer() { # $1 > $2
 	php -r 'exit(version_compare($argv[1], $argv[2], ">") ? 0 : 1);' "$1" "$2"
 }
 
+# version from the plugin.json of the plugin directory $1, empty if unreadable
 plugin_version() {
-	sed -n 's/^ *"version": *"\([^"]*\)".*/\1/p' "$1/plugin.json" 2>/dev/null | head -n 1
+	php -r '$j = json_decode((string) @file_get_contents($argv[1]), true);
+		echo is_array($j) && is_string($j["version"] ?? null) ? $j["version"] : "";' "$1/plugin.json"
 }
 
 cd /var/www/html
@@ -58,6 +61,9 @@ for name in $BUNDLED_PLUGINS; do
 	cur=$(plugin_version "plugins/$name")
 	if [ -z "$img" ]; then
 		echo "ns8-update-code: plugin $name is missing in the image" >&2
+	elif [ -z "$cur" ] && [ -e "plugins/$name" ]; then
+		# never replace a plugin whose version is unknown: it may be newer
+		echo "ns8-update-code: plugin $name kept, its version is unreadable (image has $img)" >&2
 	elif [ -z "$cur" ] || newer "$img" "$cur"; then
 		echo "ns8-update-code: plugin $name ${cur:-none} -> $img" >&2
 		rm -rf "plugins/$name"
