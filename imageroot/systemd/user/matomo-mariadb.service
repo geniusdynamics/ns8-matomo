@@ -16,6 +16,9 @@ EnvironmentFile=%S/state/database.env
 Restart=always
 TimeoutStopSec=70
 ExecStartPre=/bin/rm -f %t/matomo-mariadb.pid %t/matomo-mariadb.ctr-id
+# max-allowed-packet: the same limit is set for the dump (bin/module-dump-state)
+# and the restore (actions/restore-module/40restore_database), otherwise a row
+# that the server accepts can neither be dumped nor restored
 ExecStart=/usr/bin/podman run --conmon-pidfile %t/matomo-mariadb.pid \
     --cidfile %t/matomo-mariadb.ctr-id --cgroups=no-conmon \
     --pod-id-file %t/matomo.pod-id --replace -d --name matomo-mariadb \
