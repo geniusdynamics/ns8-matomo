@@ -21,14 +21,15 @@ docker_temp_server_stop
 exit 0
 EOS
 
-# The server and the client that loads the dump need the max_allowed_packet
-# of the running server (systemd/user/matomo-mariadb.service), otherwise
-# large rows of the dump are refused
-printf '[client-server]\nmax_allowed_packet = 64M\n' >restore.cnf
-chmod a+r restore.cnf # read by the mysql user of the container
-
 # once we exit we remove initdb.d and restore.cnf
 trap 'rm -rfv initdb.d/ restore.cnf' EXIT
+
+# The server and the client that load the dump need a max_allowed_packet
+# above the 64M of the running server (systemd/user/matomo-mariadb.service):
+# mysqldump escapes binary data, so the INSERT of a row can be about twice as
+# large as the row. 1G is the maximum; this server runs only for the restore.
+printf '[client-server]\nmax_allowed_packet = 1G\n' >restore.cnf
+chmod a+r restore.cnf # read by the mysql user of the container
 
 # we start a container to initiate a database and load the dump
 # at the end of matomo_restore.sh the dump is loaded and 
