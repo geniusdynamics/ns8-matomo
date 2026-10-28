@@ -29,8 +29,8 @@ newer() { # $1 > $2
 # Remove what a copied Matomo release no longer contains below $1 (a path
 # relative to the code, e.g. core or plugins/CoreHome), as Matomo's own
 # updater does (removeGoneFiles in plugins/CoreUpdater/Model.php): files and
-# links to files are deleted, directories and links to directories only when
-# they are empty (rmdir). Unlike Matomo's updater, the access rules that
+# links to files are deleted, directories only when they are empty (rmdir),
+# links to directories never. Unlike Matomo's updater, the access rules that
 # Matomo generates itself (.htaccess, web.config: ServerFilesGenerator) are
 # kept, also when the release dropped their directory. The names are passed
 # to sh as arguments, not read as lines, because a name may hold a line break.
@@ -82,12 +82,15 @@ if [ -n "$image" ] && { [ -z "$current" ] || newer "$image" "$current"; }; then
 		--exclude=./misc/user \
 		$excludes \
 		. | tar xf - --no-overwrite-dir
+	# a failed cleanup must not stop the start: the chown below runs only
+	# together with this copy
 	for dir in core libs vendor node_modules; do
-		remove_gone "$dir"
+		remove_gone "$dir" || echo "ns8-update-code: cleanup of $dir failed" >&2
 	done
 	for dir in /usr/src/matomo/plugins/*/; do
 		name=$(basename "$dir")
-		is_bundled "$name" || remove_gone "plugins/$name"
+		is_bundled "$name" || remove_gone "plugins/$name" ||
+			echo "ns8-update-code: cleanup of plugins/$name failed" >&2
 	done
 	# config/common.config.ini.php is a read-only mount of the module
 	find . -path ./config/common.config.ini.php -prune -o -exec chown www-data:www-data {} +
