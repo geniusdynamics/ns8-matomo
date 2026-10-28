@@ -22,7 +22,8 @@ ExecStart=/usr/bin/podman run --conmon-pidfile %t/matomo-mariadb.pid \
     --env-file=%S/state/database.env \
     --volume mysql-data:/var/lib/mysql/:Z \
     ${MARIADB_IMAGE} \
-    --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci \
+    --max-allowed-packet=64M
 # $$ keeps the password off the podman command line: the container shell expands it
 ExecStartPost=/usr/bin/podman exec matomo-mariadb /bin/bash -c 'umask 077; printf "[client]\npassword=%%s\n" "$${MARIADB_ROOT_PASSWORD}" > /root/.my.cnf'
 ExecStartPost=/usr/bin/podman exec matomo-mariadb /bin/bash -c "while ! mysqladmin ping -h localhost -P 3306 -u root; do sleep 1; done"
