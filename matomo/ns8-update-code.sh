@@ -26,6 +26,37 @@ newer() { # $1 > $2
 	php -r 'exit(version_compare($argv[1], $argv[2], ">") ? 0 : 1);' "$1" "$2"
 }
 
+# Remove what a copied Matomo release no longer contains below $1 (a path
+# relative to the code, e.g. core or plugins/CoreHome), as Matomo's own
+# updater does (removeGoneFiles in plugins/CoreUpdater/Model.php): files and
+# links to files are deleted, directories and links to directories only when
+# they are empty (rmdir). Unlike Matomo's updater, the access rules that
+# Matomo generates itself (.htaccess, web.config: ServerFilesGenerator) are
+# kept, also when the release dropped their directory. The names are passed
+# to sh as arguments, not read as lines, because a name may hold a line break.
+remove_gone() {
+	[ -d "$1" ] || return 0
+	find "$1" -depth -mindepth 1 ! -name .htaccess ! -name web.config -exec sh -c '
+		for path; do
+			if [ -e "/usr/src/matomo/$path" ] || [ -L "/usr/src/matomo/$path" ]; then
+				continue
+			elif [ -d "$path" ]; then
+				rmdir "$path" 2>/dev/null || true
+			elif rm -f "$path"; then
+				echo "ns8-update-code: removed $path" >&2
+			else
+				echo "ns8-update-code: could not remove $path" >&2
+			fi
+		done' sh {} +
+}
+
+is_bundled() {
+	case " $BUNDLED_PLUGINS " in
+	*" $1 "*) return 0 ;;
+	esac
+	return 1
+}
+
 # version from the plugin.json of the plugin directory $1, empty if unreadable
 plugin_version() {
 	php -r '$j = json_decode((string) @file_get_contents($argv[1]), true);
@@ -51,6 +82,13 @@ if [ -n "$image" ] && { [ -z "$current" ] || newer "$image" "$current"; }; then
 		--exclude=./misc/user \
 		$excludes \
 		. | tar xf - --no-overwrite-dir
+	for dir in core libs vendor node_modules; do
+		remove_gone "$dir"
+	done
+	for dir in /usr/src/matomo/plugins/*/; do
+		name=$(basename "$dir")
+		is_bundled "$name" || remove_gone "plugins/$name"
+	done
 	# config/common.config.ini.php is a read-only mount of the module
 	find . -path ./config/common.config.ini.php -prune -o -exec chown www-data:www-data {} +
 fi
