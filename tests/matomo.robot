@@ -88,6 +88,30 @@ Check if the LDAP login can be enabled and disabled
     ...    return_rc=True
     Should Not Match Regexp    ${output}    LoginLdap +\\|.*Activated
 
+Check if a newer bundled plugin and other plugins survive a code update
+    # LoginLdap updated through the Marketplace and a plugin that the image
+    # does not bundle must survive the restart and the copy of the Matomo code
+    Put File    ${CURDIR}/plugin-survival.sh    /tmp/plugin-survival.sh
+    ${rc} =    Execute Command    runagent -m ${module_id} podman cp /tmp/plugin-survival.sh matomo-app:/tmp/plugin-survival.sh
+    ...    return_rc=True  return_stdout=False
+    Should Be Equal As Integers    ${rc}  0
+    ${rc} =    Execute Command    runagent -m ${module_id} podman exec matomo-app sh /tmp/plugin-survival.sh prepare
+    ...    return_rc=True  return_stdout=False
+    Should Be Equal As Integers    ${rc}  0
+    ${rc} =    Execute Command    runagent -m ${module_id} systemctl --user restart matomo-app
+    ...    return_rc=True  return_stdout=False
+    Should Be Equal As Integers    ${rc}  0
+    ${output} =    Execute Command    runagent -m ${module_id} podman logs --since 5m matomo-app 2>&1
+    Should Contain    ${output}    ns8-update-code: Matomo 5.0.0 ->
+    Should Contain    ${output}    ns8-update-code: plugin LoginLdap 99.0.0 kept
+    ${output}  ${rc} =    Execute Command    runagent -m ${module_id} podman exec matomo-app sh /tmp/plugin-survival.sh check
+    ...    return_rc=True
+    Should Be Equal As Integers    ${rc}  0
+    Should Be Equal As Strings    ${output}    ok
+    ${rc} =    Execute Command    runagent -m ${module_id} podman exec matomo-app sh /tmp/plugin-survival.sh cleanup
+    ...    return_rc=True  return_stdout=False
+    Should Be Equal As Integers    ${rc}  0
+
 Check if report archiving is scheduled
     ${rc} =    Execute Command    runagent -m ${module_id} systemctl --user is-active matomo-archive.timer
     ...    return_rc=True  return_stdout=False
