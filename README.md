@@ -132,8 +132,11 @@ take precedence.
 The Matomo code is kept in persistent volumes. On every start the container
 copies a newer Matomo release of the image into them (`matomo/ns8-update-code.sh`;
 `config.ini.php`, third-party plugins and data are kept) and `bin/matomo-sync`
-runs the database upgrade. An installation updated with Matomo's own updater
-to a newer release than the image is left alone.
+runs the database upgrade. Like Matomo's own updater, the copy removes the
+files that the new release no longer contains from `core`, `libs`, `vendor`,
+`node_modules` and the plugins of the release; the container log lists them
+(`ns8-update-code: removed <file>`). An installation updated with Matomo's own
+updater to a newer release than the image is left alone.
 
 The image also bundles the LoginLdap plugin. It is copied into the plugin
 volume when it is missing there or when the image has a newer version. A
