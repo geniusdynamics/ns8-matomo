@@ -135,7 +135,10 @@ copies a newer Matomo release of the image into them (`matomo/ns8-update-code.sh
 runs the database upgrade. Like Matomo's own updater, the copy removes the
 files that the new release no longer contains from `core`, `libs`, `vendor`,
 `node_modules` and the plugins of the release; the container log lists them
-(`ns8-update-code: removed <file>`). An installation updated with Matomo's own
+(`ns8-update-code: removed <file>`). Files added by hand inside these
+directories, e.g. a font in `plugins/ImageGraph/fonts`, are removed too; they
+can be taken from the module backup. The `.htaccess` and `web.config` files
+that Matomo generates are kept. An installation updated with Matomo's own
 updater to a newer release than the image is left alone.
 
 The image also bundles the LoginLdap plugin. It is copied into the plugin
