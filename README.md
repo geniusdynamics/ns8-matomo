@@ -135,6 +135,15 @@ copies a newer Matomo release of the image into them (`matomo/ns8-update-code.sh
 runs the database upgrade. An installation updated with Matomo's own updater
 to a newer release than the image is left alone.
 
+The image also bundles the LoginLdap plugin. It is copied into the plugin
+volume when it is missing there or when the image has a newer version. A
+newer LoginLdap installed or updated through the Matomo Marketplace is kept,
+and the container log shows `ns8-update-code: plugin LoginLdap <version> kept
+(image has <version>)`. A LoginLdap whose version cannot be read is kept as
+well. Plugins that the image does not bundle are never touched. Going back to
+a module image of version 3.0.0 or older sets a newer LoginLdap back to the
+version of that image.
+
 ## Backup and restore
 
 The database is saved as an SQL dump (`state/matomo.sql`), together with the
