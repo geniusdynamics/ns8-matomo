@@ -1,0 +1,89 @@
+#!/usr/bin/env python3
+
+#
+# Copyright (C) 2026 Nethesis S.r.l.
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+# Instances created before 2.0.0 have no database.env and matomo.env: their
+# database credentials were fixed in the systemd units. Without the two files
+# matomo-mariadb.service does not start, and module-dump-state cannot log in
+# as root. Write them from the [database] section of Matomo's config.ini.php,
+# which holds the credentials the database was created with, and fall back to
+# the values the 1.x units passed.
+
+import os
+import re
+import subprocess
+import sys
+import agent
+
+os.chdir(os.environ["AGENT_STATE_DIR"])
+
+if os.path.exists("database.env"):
+    sys.exit(0)
+
+# Credentials of the 1.x systemd units
+database = {
+    "host": "127.0.0.1",
+    "username": "matomo",
+    "password": "Matomo,1234",
+    "dbname": "matomo",
+    "tables_prefix": "matomo",
+    "adapter": "mysql",
+}
+root_password = "Nethesis,1234"
+
+try:
+    volume_path = subprocess.run(
+        ["podman", "volume", "inspect", "configs", "--format", "{{.Mountpoint}}"],
+        check=True, capture_output=True, text=True).stdout.strip()
+    section = None
+    with open(os.path.join(volume_path, "config.ini.php")) as config:
+        for line in config:
+            match = re.match(r"^\[(.+)\]", line)
+            if match:
+                section = match.group(1)
+                continue
+            match = re.match(r'^(\w+)\s*=\s*"(.*)"\s*$', line)
+            if section == "database" and match and match.group(1) in database:
+                database[match.group(1)] = match.group(2)
+except (subprocess.CalledProcessError, OSError) as ex:
+    print(agent.SD_WARNING + f"config.ini.php not read ({ex}), using the 1.x credentials", file=sys.stderr)
+
+environment = agent.read_envfile("environment")
+
+agent.write_envfile("database.env", {
+    "MARIADB_AUTO_UPGRADE": environment.get("MARIADB_AUTO_UPGRADE", "1"),
+    "MARIADB_DISABLE_UPGRADE_BACKUP": environment.get("MARIADB_DISABLE_UPGRADE_BACKUP", "1"),
+    "MARIADB_ROOT_PASSWORD": root_password,
+    "MARIADB_DATABASE": database["dbname"],
+    "MARIADB_USER": database["username"],
+    "MARIADB_PASSWORD": database["password"],
+    "MARIADB_INITDB_SKIP_TZINFO": environment.get("MARIADB_INITDB_SKIP_TZINFO", "1"),
+})
+agent.write_envfile("matomo.env", {
+    "MATOMO_DATABASE_HOST": database["host"],
+    "MATOMO_DATABASE_USERNAME": database["username"],
+    "MATOMO_DATABASE_PASSWORD": database["password"],
+    "MATOMO_DATABASE_DBNAME": database["dbname"],
+    "MATOMO_DATABASE_TABLES_PREFIX": database["tables_prefix"],
+    "MATOMO_DATABASE_ADAPTER": database["adapter"],
+    "PHP_MEMORY_LIMIT": "2048M",
+})
+os.chmod("database.env", 0o600)
+os.chmod("matomo.env", 0o600)
+
+# The 1.x configure-module stored the database form fields in the
+# environment; the units ignored them and they are not used any more
+for evar in [
+        "MATOMO_DATABASE_HOST",
+        "MATOMO_DATABASE_USERNAME",
+        "MATOMO_DATABASE_PASSWORD",
+        "MATOMO_DATABASE_DBNAME",
+        "MATOMO_DATABASE_TABLES_PREFIX",
+        "MATOMO_DATABASE_ADAPTER",
+    ]:
+    agent.unset_env(evar)
+
+print("database.env and matomo.env written from the pre-2.0.0 credentials", file=sys.stderr)
