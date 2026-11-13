@@ -14,6 +14,13 @@ import os
 rdb = agent.redis_connect(use_replica=True)
 smtp_settings = agent.get_smarthost_settings(rdb)
 
+# A line break in a value would add arbitrary KEY=VALUE lines to the env
+# file: leave Matomo without a smarthost instead
+if any("\n" in str(v) or "\r" in str(v) for v in smtp_settings.values()):
+    print("<4>smarthost settings contain a line break: email disabled", file=sys.stderr)
+    smtp_settings = {"enabled": False, "host": "", "port": "", "username": "",
+                     "password": "", "encrypt_smtp": "", "tls_verify": False}
+
 envfile = "smarthost.env"
 
 # Using .tmp suffix: do not overwrite the target file until the new one is

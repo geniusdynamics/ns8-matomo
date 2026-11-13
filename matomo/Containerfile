@@ -96,8 +96,8 @@ RUN set -ex; \
 	apt-get dist-clean
 
 # NS8: the LoginLdap plugin, for the login with a user domain or LDAP server
-ENV LOGINLDAP_VERSION 5.2.8
-ENV LOGINLDAP_SHA256 db56b0273130adaafeaf3530f0ea5df3748079fb715a4afaaff164f0d561d1c7
+ENV LOGINLDAP_VERSION 5.2.9
+ENV LOGINLDAP_SHA256 95b16b9c125eea1ba4498883be89c70a4105e4e1d896af2accacc3103c4e0f8a
 RUN set -ex; \
 	curl -fsSL -o loginldap.tar.gz \
 		"https://github.com/matomo-org/plugin-LoginLdap/archive/refs/tags/${LOGINLDAP_VERSION}.tar.gz"; \

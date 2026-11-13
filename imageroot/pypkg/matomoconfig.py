@@ -14,6 +14,7 @@ private) and not part of the backup (etc/state-include.conf).
 """
 
 import os
+import sys
 
 import ldapsettings
 
@@ -37,7 +38,10 @@ def ini_value(value):
     value = str(value)
     if "\n" in value or "\r" in value:
         raise ValueError("line breaks are not allowed in INI values")
-    return '"' + value.replace("\\", "\\\\").replace('"', '\\"') + '"'
+    # PHP's INI scanner expands ${VAR} inside double quotes: escape it, or a
+    # password with "${" is silently changed or breaks the whole file
+    escaped = value.replace("\\", "\\\\").replace('"', '\\"').replace("${", "\\${")
+    return '"' + escaped + '"'
 
 
 def ldap_filter_escape(value):
@@ -134,17 +138,29 @@ def cluster_network():
     try:
         import agent
         return agent.redis_connect(use_replica=True).get("cluster/network") or ""
-    except Exception:
+    except Exception as exc:
+        print(f"<4>cluster network unknown, proxy_ips not set: {exc}", file=sys.stderr)
         return ""
+
+
+# Second-level labels of country suffixes (co.uk, com.au, ...). The module
+# runs in the agent environment, which has no public suffix list: a domain
+# of only one of these plus a country code is treated as a public suffix.
+COUNTRY_SECOND_LEVEL = {"ac", "co", "com", "edu", "gob", "gov", "go", "ltd", "mil",
+                        "ne", "net", "nom", "or", "org", "plc", "sch"}
 
 
 def noreply_address(host):
     """Sender of Matomo emails: noreply@ the domain of the Matomo host name
     (matomo.example.org -> example.org), which is far more likely to pass
-    SPF than Matomo's default noreply@<host name>."""
+    SPF than Matomo's default noreply@<host name>. If stripping the first
+    label would leave a public suffix (matomo.co.uk -> co.uk) or the host has
+    fewer than three labels, the host name itself is used."""
     labels = host.split(".")
-    domain = ".".join(labels[1:]) if len(labels) > 2 else host
-    return "noreply@" + domain
+    domain = labels[1:]
+    if len(labels) < 3 or (len(domain) == 2 and domain[0] in COUNTRY_SECOND_LEVEL):
+        return "noreply@" + host
+    return "noreply@" + ".".join(domain)
 
 
 def general_section():

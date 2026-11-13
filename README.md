@@ -132,8 +132,23 @@ take precedence.
 The Matomo code is kept in persistent volumes. On every start the container
 copies a newer Matomo release of the image into them (`matomo/ns8-update-code.sh`;
 `config.ini.php`, third-party plugins and data are kept) and `bin/matomo-sync`
-runs the database upgrade. An installation updated with Matomo's own updater
-to a newer release than the image is left alone.
+runs the database upgrade. Like Matomo's own updater, the copy removes the
+files that the new release no longer contains from `core`, `libs`, `vendor`,
+`node_modules` and the plugins of the release; the container log lists them
+(`ns8-update-code: removed <file>`). Files added by hand inside these
+directories, e.g. a font in `plugins/ImageGraph/fonts`, are removed too; they
+can be taken from the module backup. The `.htaccess` and `web.config` files
+that Matomo generates are kept. An installation updated with Matomo's own
+updater to a newer release than the image is left alone.
+
+The image also bundles the LoginLdap plugin. It is copied into the plugin
+volume when it is missing there or when the image has a newer version. A
+newer LoginLdap installed or updated through the Matomo Marketplace is kept,
+and the container log shows `ns8-update-code: plugin LoginLdap <version> kept
+(image has <version>)`. A LoginLdap whose version cannot be read is kept as
+well. Plugins that the image does not bundle are never touched. Going back to
+a module image of version 3.0.0 or older sets a newer LoginLdap back to the
+version of that image.
 
 ## Backup and restore
 
@@ -160,7 +175,14 @@ settings again.
   mail server, and its certificate names the host, so the name check could not
   pass for it.
 - The sender is `noreply@` the domain of the Matomo host name
-  (`matomo.example.org` sends as `noreply@example.org`).
+  (`matomo.example.org` sends as `noreply@example.org`). If that domain would
+  be a public suffix (`matomo.co.uk`, `matomo.com.au`) or the host name has
+  fewer than three labels, the host name itself is used. Another sender can
+  be set in the Matomo UI (General settings, email).
+- Matomo logs in with `LOGIN`. Mail servers that offer only `PLAIN` or
+  `CRAM-MD5` are not supported.
+- Smarthost settings with a line break are ignored and Matomo sends no
+  emails (a warning is logged).
 - Mail settings and the sender changed in the Matomo UI are stored in
   `config.ini.php` and take precedence over the generated ones.
 - Test the delivery with
@@ -175,7 +197,20 @@ reads the last address of the list, would record every visit with it. The
 module therefore lists the cluster VPN network (`cluster/network`) in
 `proxy_ips[]`, so Matomo skips it. A gateway that reaches the node through
 another address, e.g. its LAN address, has to be added to `proxy_ips[]` in the
-Matomo configuration.
+Matomo configuration. A `proxy_ips[]` in `config.ini.php` replaces the
+generated list instead of extending it, so repeat the cluster network there.
+
+This only works if the worker's Traefik trusts the gateway. By default NS8
+Traefik does not trust any proxy: it replaces `X-Forwarded-For` with the
+gateway's address, and Matomo records that address for every visit. Trust the
+gateway's VPN address on the worker node, e.g.
+
+```bash
+api-cli run module/traefik2/set-trusted-proxies --data '{"proxies": ["10.5.4.1"]}'
+```
+
+(`traefik2` is the Traefik of the worker node, `10.5.4.1` the VPN address of
+the gateway node; the action restarts Traefik.)
 
 ## Update
 
