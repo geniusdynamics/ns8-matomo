@@ -72,7 +72,22 @@ def wait_ready(host, timeout=300):
     raise TimeoutError("Matomo does not answer")
 
 
+def wait_container(timeout=300):
+    """80start_services may return before matomo-app exists: without this,
+    installed() would read a missing container as "not installed" and the
+    settings (LDAP, plugins) would not be applied"""
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        if subprocess.run(["podman", "exec", "matomo-app", "true"],
+                          stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0:
+            return
+        time.sleep(2)
+    raise TimeoutError("matomo-app did not start")
+
+
 host = os.environ.get("TRAEFIK_HOST", "")
+wait_container()
+wait_ready(host)
 if not installed():
     login = (data.get("admin_user") or "").strip()
     password = data.get("admin_password") or ""
