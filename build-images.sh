@@ -13,6 +13,9 @@ images=()
 repobase="${REPOBASE:-ghcr.io/geniusdynamics}"
 # Configure the image name
 reponame="matomo"
+# Node.js 25+ no longer ships Corepack, install it from npm
+# renovate: datasource=npm packageName=corepack
+corepack_version=0.36.0
 mariadb_image="docker.io/library/mariadb:10.11.19@sha256:ab2006938ed319f467ea98b3bb6c944757c2f10b953b3038a8a8113bd81e1b75"
 
 # Matomo application image, built from the official matomo-org/docker build
@@ -30,7 +33,8 @@ container=$(buildah from scratch)
 # Reuse existing nodebuilder-matomo container, to speed up builds
 if ! buildah containers --format "{{.ContainerName}}" | grep -q nodebuilder-matomo; then
   echo "Pulling NodeJS runtime..."
-  buildah from --name nodebuilder-matomo -v "${PWD}:/usr/src:Z" docker.io/library/node:24.16.0-slim@sha256:2c87ef9bd3c6a3bd4b472b4bec2ce9d16354b0c574f736c476489d09f560a203
+  buildah from --name nodebuilder-matomo -v "${PWD}:/usr/src:Z" docker.io/library/node:26.13.0-slim
+  buildah run nodebuilder-matomo sh -c "npm install -g corepack@${corepack_version} && corepack enable"
 fi
 
 echo "Build static UI files with node..."
