@@ -2,6 +2,7 @@
 Library    SSHLibrary
 
 *** Variables ***
+${HOST}    matomo.example.org
 ${HOST_OPTS}    "host": "matomo.test.local", "lets_encrypt": false, "http2https": false
 
 *** Test Cases ***
@@ -13,15 +14,15 @@ Check if matomo is installed correctly
     Set Suite Variable    ${module_id}    ${output.module_id}
 
 Check if invalid settings are rejected
-    ${rc} =    Execute Command    api-cli run module/${module_id}/configure-module --data '{${HOST_OPTS}, "admin_user": "admin", "admin_password": "short", "admin_email": "admin@test.local"}'
+    ${rc} =    Execute Command    api-cli run module/${module_id}/configure-module --data '{"host":"${HOST}","http2https":true,"lets_encrypt":false}'
     ...    return_rc=True  return_stdout=False
     Should Not Be Equal As Integers    ${rc}  0
-    ${rc} =    Execute Command    api-cli run module/${module_id}/configure-module --data '{${HOST_OPTS}, "ldap_enabled": true, "ldap_source": "custom", "ldap_url": "http://ldap.test.local"}'
+    ${rc} =    Execute Command    api-cli run module/${module_id}/configure-module --data '{"host":"${HOST}","http2https":true,"lets_encrypt":false}'
     ...    return_rc=True  return_stdout=False
     Should Not Be Equal As Integers    ${rc}  0
 
 Check if matomo can be configured and installed
-    ${rc} =    Execute Command    api-cli run module/${module_id}/configure-module --data '{${HOST_OPTS}, "admin_user": "admin", "admin_password": "Robot-Test-Password-1", "admin_email": "admin@test.local"}'
+    ${rc} =    Execute Command    api-cli run module/${module_id}/configure-module --data '{"host":"${HOST}","http2https":true,"lets_encrypt":false}'
     ...    return_rc=True  return_stdout=False
     Should Be Equal As Integers    ${rc}  0
     ${output}  ${rc} =    Execute Command    api-cli run module/${module_id}/get-configuration --data '{}'
@@ -58,7 +59,7 @@ Check if PHP in the app container has the PHP2Shell fix
     Should Be Equal As Strings    ${output}    ok
 
 Check if the LDAP login can be enabled and disabled
-    ${rc} =    Execute Command    api-cli run module/${module_id}/configure-module --data '{${HOST_OPTS}, "ldap_enabled": true, "ldap_view_access": "all", "ldap_source": "custom", "ldap_url": "ldap://127.0.0.1:3890", "ldap_schema": "rfc2307", "ldap_base_dn": "dc=test,dc=local", "ldap_bind_dn": "cn=reader,dc=test,dc=local", "ldap_bind_password": "Robot-Bind-1"}'
+    ${rc} =    Execute Command    api-cli run module/${module_id}/configure-module --data '{"host":"${HOST}","http2https":true,"lets_encrypt":false}'
     ...    return_rc=True  return_stdout=False
     Should Be Equal As Integers    ${rc}  0
     ${output}  ${rc} =    Execute Command    runagent -m ${module_id} podman exec -u www-data matomo-app php /var/www/html/console plugin:list
@@ -68,7 +69,7 @@ Check if the LDAP login can be enabled and disabled
     ...    return_rc=True
     Should Contain    ${output}    "ldap_bind_password_set": true
     Should Not Contain    ${output}    Robot-Bind-1
-    ${rc} =    Execute Command    api-cli run module/${module_id}/configure-module --data '{${HOST_OPTS}, "ldap_enabled": false}'
+    ${rc} =    Execute Command    api-cli run module/${module_id}/configure-module --data '{"host":"${HOST}","http2https":true,"lets_encrypt":false}'
     ...    return_rc=True  return_stdout=False
     Should Be Equal As Integers    ${rc}  0
     ${output}  ${rc} =    Execute Command    runagent -m ${module_id} podman exec -u www-data matomo-app php /var/www/html/console plugin:list
