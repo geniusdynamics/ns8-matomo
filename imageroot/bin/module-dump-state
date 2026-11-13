@@ -21,5 +21,6 @@ podman exec matomo-mariadb /bin/sh -c 'exec mysqldump \
         --single-transaction \
         --quick \
         --routines \
-        --add-drop-table' > matomo.sql.tmp
+        --add-drop-table \
+        --max-allowed-packet=64M' > matomo.sql.tmp
 mv -f matomo.sql.tmp matomo.sql

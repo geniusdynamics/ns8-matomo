@@ -16,13 +16,17 @@ EnvironmentFile=%S/state/database.env
 Restart=always
 TimeoutStopSec=70
 ExecStartPre=/bin/rm -f %t/matomo-mariadb.pid %t/matomo-mariadb.ctr-id
+# max-allowed-packet: the dump (bin/module-dump-state) and the restore
+# (actions/restore-module/40restore_database) allow at least as much, otherwise a row
+# that the server accepts can neither be dumped nor restored
 ExecStart=/usr/bin/podman run --conmon-pidfile %t/matomo-mariadb.pid \
     --cidfile %t/matomo-mariadb.ctr-id --cgroups=no-conmon \
     --pod-id-file %t/matomo.pod-id --replace -d --name matomo-mariadb \
     --env-file=%S/state/database.env \
     --volume mysql-data:/var/lib/mysql/:Z \
     ${MARIADB_IMAGE} \
-    --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci \
+    --max-allowed-packet=64M
 # $$ keeps the password off the podman command line: the container shell expands it
 ExecStartPost=/usr/bin/podman exec matomo-mariadb /bin/bash -c 'umask 077; printf "[client]\npassword=%%s\n" "$${MARIADB_ROOT_PASSWORD}" > /root/.my.cnf'
 ExecStartPost=/usr/bin/podman exec matomo-mariadb /bin/bash -c "while ! mysqladmin ping -h localhost -P 3306 -u root; do sleep 1; done"
