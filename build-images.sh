@@ -13,14 +13,21 @@ images=()
 repobase="${REPOBASE:-ghcr.io/geniusdynamics}"
 # Configure the image name
 reponame="matomo"
+# Node.js 25+ no longer ships Corepack, install it from npm
+# renovate: datasource=npm packageName=corepack
+corepack_version=0.36.0
 mariadb_image="docker.io/library/mariadb:10.11.19@sha256:ab2006938ed319f467ea98b3bb6c944757c2f10b953b3038a8a8113bd81e1b75"
 
 # Matomo application image, built from the official matomo-org/docker build
 # files (vendored in matomo/) on a patched PHP base image. Exposed to the
 # units as ${MATOMO_APP_IMAGE} through org.nethserver.images.
-app_image="${repobase}/matomo-app:${IMAGETAG:-latest}"
+# The CI publishes it under the release tag (IMAGETAG, set by the publish
+# workflow), so each module release runs the Matomo version it was tested with:
+# matomo-app:3.2.0 holds Matomo 5.14.2. Never fall back to a moving "latest".
+matomo_version=$(sed -n 's/^ENV MATOMO_VERSION //p' matomo/Containerfile)
+app_image="${repobase}/matomo-app:${IMAGETAG:-local}"
 echo "Build the Matomo application image..."
-podman build --force-rm --pull=missing -t "${app_image}" -f matomo/Containerfile matomo/
+podman build --force-rm --pull=missing --label "org.opencontainers.image.version=${matomo_version}" -t "${app_image}" -f matomo/Containerfile matomo/
 podman tag "${app_image}" "${repobase}/matomo-app"
 images+=("${repobase}/matomo-app")
 
@@ -30,7 +37,8 @@ container=$(buildah from scratch)
 # Reuse existing nodebuilder-matomo container, to speed up builds
 if ! buildah containers --format "{{.ContainerName}}" | grep -q nodebuilder-matomo; then
   echo "Pulling NodeJS runtime..."
-  buildah from --name nodebuilder-matomo -v "${PWD}:/usr/src:Z" docker.io/library/node:24.16.0-slim@sha256:2c87ef9bd3c6a3bd4b472b4bec2ce9d16354b0c574f736c476489d09f560a203
+  buildah from --name nodebuilder-matomo -v "${PWD}:/usr/src:Z" docker.io/library/node:26.13.0-slim
+  buildah run nodebuilder-matomo sh -c "npm install -g corepack@${corepack_version} && corepack enable"
 fi
 
 echo "Build static UI files with node..."
@@ -48,6 +56,7 @@ buildah config --entrypoint=/ \
   --label="org.nethserver.authorizations=traefik@node:routeadm cluster:accountconsumer" \
   --label="org.nethserver.tcp-ports-demand=1" \
   --label="org.nethserver.rootfull=0" \
+    --label="org.nethserver.min-core=3.0.0" \
   --label="org.nethserver.images=${app_image} ${mariadb_image}" \
   "${container}"
 # Commit the image
