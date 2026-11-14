@@ -21,9 +21,13 @@ mariadb_image="docker.io/library/mariadb:10.11.19@sha256:ab2006938ed319f467ea98b
 # Matomo application image, built from the official matomo-org/docker build
 # files (vendored in matomo/) on a patched PHP base image. Exposed to the
 # units as ${MATOMO_APP_IMAGE} through org.nethserver.images.
-app_image="${repobase}/matomo-app:${IMAGETAG:-latest}"
+# The CI publishes it under the release tag (IMAGETAG, set by the publish
+# workflow), so each module release runs the Matomo version it was tested with:
+# matomo-app:3.2.0 holds Matomo 5.14.2. Never fall back to a moving "latest".
+matomo_version=$(sed -n 's/^ENV MATOMO_VERSION //p' matomo/Containerfile)
+app_image="${repobase}/matomo-app:${IMAGETAG:-local}"
 echo "Build the Matomo application image..."
-podman build --force-rm --pull=missing -t "${app_image}" -f matomo/Containerfile matomo/
+podman build --force-rm --pull=missing --label "org.opencontainers.image.version=${matomo_version}" -t "${app_image}" -f matomo/Containerfile matomo/
 podman tag "${app_image}" "${repobase}/matomo-app"
 images+=("${repobase}/matomo-app")
 
